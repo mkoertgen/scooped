@@ -16,6 +16,8 @@ $ scoop bucket known
 # Install an app
 $ scoop install mko/phone-home
 # Update bucket(s) and manifests
+$ scoop update
+# Update all apps in bucket
 $ scoop update mko *
 ```
 
