@@ -1,10 +1,10 @@
 {
-    "version": "0.1.0",
-    "url": "https://github.com/mkoertgen/scooped/archive/refs/tags/0.0.1.zip",
-    "hash": "61fef95f425f86bef7e7125562e4e1959effb1ff18db231f62b3f3abcd73533f",
-    "depends": "gsudo",
-    "extract_dir": "scooped-0.0.1/_apps/phone-home",
-    "bin": [["phone-home.ps1", "ph"]],
-    "homepage": "https://github.com/mkoertgen/scooped/tree/main/_apps/phone-home",
-    "license": "Unlicense"
+  "version": "0.0.1",
+  "url": "https://github.com/mkoertgen/scooped/archive/refs/tags/0.0.1.zip",
+  "hash": "61fef95f425f86bef7e7125562e4e1959effb1ff18db231f62b3f3abcd73533f",
+  "depends": "gsudo",
+  "extract_dir": "scooped-0.0.1/_apps/phone-home",
+  "bin": [["phone-home.ps1", "ph"]],
+  "homepage": "https://github.com/mkoertgen/scooped/tree/main/_apps/phone-home",
+  "license": "Unlicense"
 }

@@ -13,9 +13,10 @@ After manifests have been committed and pushed, run the following:
 $ scoop bucket add mko https://github.com/mkoertgen/scooped
 # Verify bucket has been added
 $ scoop bucket known
-
 # Install an app
 $ scoop install mko/phone-home
+# Update bucket(s) and manifests
+$ scoop update mko *
 ```
 
 ## How do I contribute new manifests?
