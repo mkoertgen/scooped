@@ -1,0 +1,15 @@
+{
+  "private": true,
+  "scripts": {
+    "changelog": "npm run cl:gen -- -o _docs/CHANGELOG.md",
+    "cl:gen": "conventional-changelog -n changelog.config.js -u -r 0"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^17.1.2",
+    "@commitlint/config-conventional": "^17.1.0",
+    "@cspell/dict-de-de": "^3.0.1",
+    "conventional-changelog-cli": "^4.1.0",
+    "conventional-changelog-conventionalcommits": "^7.0.2",
+    "cspell": "^6.14.0"
+  }
+}
