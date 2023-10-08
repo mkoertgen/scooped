@@ -1,7 +1,7 @@
 {
     "version": "0.1.0",
     "url": "https://github.com/mkoertgen/scooped/archive/refs/tags/0.0.1.zip",
-    "hash": "70ad1aee34e41d223bf3e53a210436484efa37175a1d622fe79169394699acd3",
+    "hash": "61fef95f425f86bef7e7125562e4e1959effb1ff18db231f62b3f3abcd73533f",
     "depends": "gsudo",
     "extract_dir": "scooped-0.0.1/_apps/phone-home",
     "bin": [["phone-home.ps1", "ph"]],
