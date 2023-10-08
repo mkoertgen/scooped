@@ -1,5 +1,7 @@
 {
     "version": "0.1.1",
     "url": "https://raw.githubusercontent.com/mkoertgen/scooped/main/_apps/phone-home/phone-home.ps1",
-    "bin": "phone-home.ps1"
+    "bin": "phone-home.ps1",
+    "homepage": "https://github.com/mkoertgen/scooped/tree/main/_apps/phone-home",
+    "license": "unlicense"
 }

@@ -15,7 +15,7 @@ function Stop-Services {
       Write-Host "Stopped service '$($service.Name)'."
     }
     if ($service.StartType -ne "Disabled") {
-      Write-Debug "Disabling service '$($service.Name)'..." 
+      Write-Debug "Disabling service '$($service.Name)'..."
       gsudo { Set-Service -Name $args[0] -StartupType Disabled } -args $service.Name
       Write-Host "Disabled service '$($service.Name)'."
     }
@@ -85,8 +85,7 @@ function Start-App {
   if ($command) {
     Start-Process -FilePath $command
     Write-Host "Started app '$AppName'."
-  }
-  else {
+  } else {
     Write-Warning "Could not find app '$AppName'."
   }
 }
@@ -120,8 +119,7 @@ function Check-Config {
     $service = Get-Service -Name $name -ErrorAction SilentlyContinue
     if ($service) {
       Write-Host "Found service '$name'."
-    }
-    else {
+    } else {
       Write-Warning "Could not find service '$name'."
     }
   }
@@ -130,8 +128,7 @@ function Check-Config {
     $command = Find-App -AppName $name
     if ($command) {
       Write-Host "Found app '$name' at '$command'."
-    }
-    else {
+    } else {
       Write-Warning "Could not find '$name'."
     }
   }
@@ -159,8 +156,7 @@ function Check-Status {
     $process = Get-Process -Name $name -ErrorAction SilentlyContinue | Select-Object -First 1
     if ($process) {
       Write-Host "  '$($name)' is running."
-    }
-    else {
+    } else {
       Write-Host "  '$($name)' is not running."
     }
   }
@@ -230,7 +226,7 @@ Date: 2023-10-08
 
   switch ($Verb) {
     ([CommandType]::startAll) {
-      Start-Services $services 
+      Start-Services $services
       Write-Debug "Starting apps..."
       foreach ($name in $appLinks) {
         Start-App -AppName $name
