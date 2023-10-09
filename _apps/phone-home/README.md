@@ -21,4 +21,4 @@ $ scoop install mko/phone-home
 
 And here is what you can do with `phone-home` (usually aliased as `ph`)
 
-[![asciicast](https://asciinema.org/a/3iDg9JGerEOmYcGquXXK5CaXl.svg)](https://asciinema.org/a/3iDg9JGerEOmYcGquXXK5CaXl)
+<script async id="asciicast-612778" src="https://asciinema.org/a/612778.js"></script>
