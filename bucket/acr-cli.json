@@ -4,6 +4,6 @@
   "homepage": "https://github.com/Azure/acr-cli",
   "license": "MIT License",
   "url": "https://github.com/Azure/acr-cli/releases/download/v0.8/acr-cli_0.8_Windows_x86_64.zip",
-  "hash": "1ab98727c2fac0c3218190f595e254d9cbcfbec7fcacb2d7dfc084d140311c6e",
+  "hash": "af2f315f3a7f1f304039135502f09beab6834524f2b7e5ab639a79c6e02c65a7",
   "bin": [["acr-cli.exe", "acr"]]
 }
