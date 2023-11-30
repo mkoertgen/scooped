@@ -1,0 +1,9 @@
+{
+  "version": "1.6.0",
+  "description": "Botkube is a messaging bot for monitoring and debugging Kubernetes clusters.",
+  "homepage": "https://github.com/kubeshop/botkube",
+  "license": "MIT License",
+  "url": "https://github.com/kubeshop/botkube/releases/download/v1.6.0/botkube-windows-amd64.exe",
+  "hash": "ac2072bcb412f1dc94e0c335cd4f57d099845d9ad56ea8321b2f3d275e93ea0f",
+  "bin": "botkube.exe"
+}
