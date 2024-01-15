@@ -1,0 +1,9 @@
+{
+  "version": "0.11.0",
+  "description": "Sloth - Easy and simple Prometheus SLO (service level objectives) generator",
+  "homepage": "https://github.com/slok/sloth",
+  "license": "Apache License 2.0",
+  "url": "https://github.com/slok/sloth/releases/download/v0.11.0/sloth-windows-amd64.exe",
+  "hash": "1ab98727c2fac0c3218190f595e254d9cbcfbec7fcacb2d7dfc084d140311c6e",
+  "bin": [["sloth-windows-amd64.exe", "sloth"]]
+}
