@@ -1,0 +1,9 @@
+{
+  "version": "2.9.3",
+  "description": "Loki: like Prometheus, but for logs.",
+  "homepage": "https://github.com/grafana/loki",
+  "license": "GNU Affero General Public License v3.0",
+  "url": "https://github.com/grafana/loki/releases/download/v2.8.7/logcli-windows-amd64.exe.zip",
+  "hash": "1ab98727c2fac0c3218190f595e254d9cbcfbec7fcacb2d7dfc084d140311c6e",
+  "bin": [["logcli-windows-amd64.exe", "logcli"]]
+}
