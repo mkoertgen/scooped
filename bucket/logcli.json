@@ -4,6 +4,6 @@
   "homepage": "https://github.com/grafana/loki",
   "license": "GNU Affero General Public License v3.0",
   "url": "https://github.com/grafana/loki/releases/download/v2.8.7/logcli-windows-amd64.exe.zip",
-  "hash": "1ab98727c2fac0c3218190f595e254d9cbcfbec7fcacb2d7dfc084d140311c6e",
+  "hash": "bcf66fdd8776e7efd65554cc7d60315291cac9d80e2c4bd1f3bc04d0bfeaa193",
   "bin": [["logcli-windows-amd64.exe", "logcli"]]
 }
