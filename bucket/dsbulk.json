@@ -1,0 +1,9 @@
+{
+  "version": "1.11.0",
+  "description": "DataStax Bulk Loader",
+  "homepage": "https://downloads.datastax.com/#bulk-loader",
+  "license": "Apache-2.0",
+  "url": "https://downloads.datastax.com/dsbulk/dsbulk-1.11.0.zip",
+  "hash": "af2f315f3a7f1f304039135502f09beab6834524f2b7e5ab639a79c6e02c65a7",
+  "bin": [["acr-cli.exe", "acr"]]
+}
