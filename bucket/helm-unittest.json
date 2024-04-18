@@ -4,6 +4,6 @@
   "homepage": "https://github.com/helm-unittest/helm-unittest",
   "license": "MIT License",
   "url": "https://github.com/helm-unittest/helm-unittest/releases/download/v0.4.4/helm-unittest-windows-amd64-0.4.4.tgz",
-  "hash": "d4a712d872e9eb22771624d9f2a63d25623aa5d21a0c59dd3c3e762cc04bd383",
+  "hash": "08ca1ae91bdfba3f3582826cf225657f1a989a5369807dc513cbb1eca29b7437",
   "bin": [["untt.exe", "untt"]]
 }
