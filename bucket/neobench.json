@@ -5,5 +5,5 @@
   "license": "Apache 2",
   "url": "https://github.com/neo-technology/neobench/releases/download/v0.0.26/neobench_v0.0.26_windows_amd64",
   "hash": "7ad92d22679efd8ad3a559590fb088f9548aaa45f057e7521587a4bcfca80559",
-  "bin": "neobench.exe"
+  "bin": [["neobench_v0.0.26_windows_amd64", "neobench.exe"]]
 }
