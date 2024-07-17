@@ -1,0 +1,9 @@
+{
+  "version": "v0.0.26",
+  "description": "Scriptable Neo4j benchmarks. Neobench helps you create and run artificial load to tune your Neo4j deployments.",
+  "homepage": "https://github.com/neo-technology/neobench",
+  "license": "Apache 2",
+  "url": "https://github.com/neo-technology/neobench/releases/download/v0.0.26/neobench_v0.0.26_windows_amd64",
+  "hash": "ac2072bcb412f1dc94e0c335cd4f57d099845d9ad56ea8321b2f3d275e93ea0f",
+  "bin": "neobench.exe"
+}
