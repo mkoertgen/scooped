@@ -4,7 +4,7 @@
   "homepage": "https://github.com/michael-simons/neo4j-migrations",
   "license": "Apache-2.0",
   "url": "https://github.com/michael-simons/neo4j-migrations/releases/download/2.13.0/neo4j-migrations-2.13.0-windows-x86_64.zip",
-  "hash": "a37d23be7dae3604cb8289f540130831a5d41997fdd4a4e9976759dd6fa27b21",
+  "hash": "1330418000f5f0a124c6d6d34dab703ae936e54aa67d7153ca18619003fbe82b",
   "bin": [
     [
       "neo4j-migrations-2.13.0-windows-x86_64\bin\neo4j-migrations.exe",
