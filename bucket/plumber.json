@@ -5,5 +5,5 @@
   "license": "MIT",
   "url": "https://github.com/streamdal/plumber/releases/download/v2.7.1/plumber-windows.exe",
   "hash": "20cdd7341aeb0287e39d3dd640700b18a86f676fc7b14baac1d88549e9ac9d1f",
-  "bin": [["plumber-windows.exe", "plumber.exe"]]
+  "bin": [["plumber-windows.exe", "plumber"]]
 }
