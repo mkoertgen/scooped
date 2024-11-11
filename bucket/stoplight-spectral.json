@@ -4,6 +4,6 @@
   "homepage": "https://github.com/stoplightio/spectral",
   "license": "Apache License 2.0",
   "url": "https://github.com/stoplightio/spectral/releases/download/v6.13.1/spectral.exe",
-  "hash": "20cdd7341aeb0287e39d3dd640700b18a86f676fc7b14baac1d88549e9ac9d1f",
+  "hash": "e3dbeb28c5166c2552ee71c53761eac9b5ab4b84d0234120986dc4833b33bd29",
   "bin": [["spectral.exe", "spectral"]]
 }
