@@ -1,0 +1,9 @@
+{
+  "version": "v6.13.1",
+  "description": "A flexible JSON/YAML linter for creating automated style guides, with baked in support for OpenAPI (v3.1, v3.0, and v2.0), Arazzo v1.0, as well as AsyncAPI v2.x.",
+  "homepage": "https://github.com/stoplightio/spectral",
+  "license": "Apache License 2.0",
+  "url": "https://github.com/stoplightio/spectral/releases/download/v6.13.1/spectral.exe",
+  "hash": "20cdd7341aeb0287e39d3dd640700b18a86f676fc7b14baac1d88549e9ac9d1f",
+  "bin": [["spectral.exe", "spectral"]]
+}
