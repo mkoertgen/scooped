@@ -5,5 +5,5 @@
   "license": "AGPL-3.0",
   "url": "https://github.com/grafana/mimir/releases/download/mimir-2.14.3/mimirtool-windows-amd64.exe",
   "hash": "15d7279197d22b3018868cab33ec8739c7edb6f010fc2d7a30ad86b13d82ee3e",
-  "bin": "mimirtool.exe"
+  "bin": [["mimirtool-windows-amd64.exe", "mimirtool"]]
 }
