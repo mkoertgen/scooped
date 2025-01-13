@@ -4,6 +4,6 @@
   "homepage": "https://github.com/kubeshop/botkube",
   "license": "MIT License",
   "url": "https://github.com/kubeshop/botkube/releases/download/v1.6.0/botkube-windows-amd64.exe",
-  "hash": "ac2072bcb412f1dc94e0c335cd4f57d099845d9ad56ea8321b2f3d275e93ea0f",
+  "hash": "5ebd71131c061ac24171ade96f41a9a7f9ed50cf1f24d6de89855ba7a8f1426c",
   "bin": "botkube.exe"
 }
