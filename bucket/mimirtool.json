@@ -4,6 +4,6 @@
   "homepage": "https://github.com/grafana/mimir",
   "license": "AGPL-3.0",
   "url": "https://github.com/grafana/mimir/releases/download/mimir-2.14.3/mimirtool-windows-amd64.exe",
-  "hash": "ac2072bcb412f1dc94e0c335cd4f57d099845d9ad56ea8321b2f3d275e93ea0f",
+  "hash": "15d7279197d22b3018868cab33ec8739c7edb6f010fc2d7a30ad86b13d82ee3e",
   "bin": "mimirtool"
 }
