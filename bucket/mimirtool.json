@@ -3,7 +3,7 @@
   "description": "Grafana Mimir provides horizontally scalable, highly available, multi-tenant, long-term storage for Prometheus.",
   "homepage": "https://github.com/grafana/mimir",
   "license": "AGPL-3.0",
-  "url": "https://github.com/grafana/mimir/releases/download/mimir-2.14.3/mimirtool-windows-amd64.exe",
+  "url": "https://github.com/grafana/mimir/releases/download/mimir-2.15.0/mimirtool-windows-amd64.exe",
   "hash": "15d7279197d22b3018868cab33ec8739c7edb6f010fc2d7a30ad86b13d82ee3e",
   "bin": [["mimirtool-windows-amd64.exe", "mimirtool"]]
 }
