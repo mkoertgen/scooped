@@ -1,0 +1,9 @@
+{
+  "version": "0.0.4",
+  "description": "So that you don't have to write values.schema.json by hand from scratch for your Helm 3 charts. [CURRENTLY NOT MAINTAINED]",
+  "homepage": "https://github.com/karuppiah7890/helm-schema-gen",
+  "license": "MIT License",
+  "url": "https://github.com/karuppiah7890/helm-schema-gen/releases/download/0.0.4/helm-schema-gen_0.0.4_Windows_x86_64.zip",
+  "hash": "e932387d87a168f272b69f78ce71311ae550a4628a35f29c4c9fd97de3815a12",
+  "bin": "helm-schema-gen.exe"
+}
