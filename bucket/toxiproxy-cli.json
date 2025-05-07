@@ -1,0 +1,9 @@
+{
+  "version": "v2.12.0",
+  "description": "Toxiproxy is a framework for simulating network conditions.",
+  "homepage": "https://github.com/Shopify/toxiproxy",
+  "license": "MIT License",
+  "url": "https://github.com/Shopify/toxiproxy/releases/download/v2.12.0/toxiproxy-cli-windows-amd64.exe",
+  "hash": "5ebd71131c061ac24171ade96f41a9a7f9ed50cf1f24d6de89855ba7a8f1426c",
+  "bin": [["toxiproxy-cli-windows-amd64.exe", "toxiproxy-cli"]]
+}
