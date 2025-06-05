@@ -1,9 +1,9 @@
 {
-  "version": "0.7.2",
+  "version": "0.8.2",
   "description": "Unit test for helm chart in YAML to keep your chart consistent and robust!",
   "homepage": "https://github.com/helm-unittest/helm-unittest",
   "license": "MIT License",
-  "url": "https://github.com/helm-unittest/helm-unittest/releases/download/v0.7.2/helm-unittest-windows-amd64-0.7.2.tgz",
+  "url": "https://github.com/helm-unittest/helm-unittest/releases/download/v0.8.2/helm-unittest-windows-amd64-0.8.2.tgz",
   "hash": "e932387d87a168f272b69f78ce71311ae550a4628a35f29c4c9fd97de3815a12",
   "bin": [["untt.exe", "untt"]]
 }
