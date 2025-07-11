@@ -4,6 +4,6 @@
   "homepage": "https://terranetes.appvia.io/",
   "license": "GPL-2.0",
   "url": "https://github.com/appvia/terranetes-controller/releases/download/v0.5.6/tnctl-windows-amd64.exe",
-  "hash": "e14d2bb4ec328c1022cab36030a6b145e58f242160b6a3c5f30173cbd75ef15f",
+  "hash": "14d3b467d968f956cfd88d6e81557232bd6f4d515dc3ab85dbd6ed3029d65430",
   "bin": [["tnctl-windows-amd64.exe", "tnctl"]]
 }
