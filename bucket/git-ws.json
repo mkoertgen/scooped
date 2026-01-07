@@ -1,0 +1,9 @@
+{
+  "version": "0.0.1",
+  "url": "https://github.com/mkoertgen/scooped/archive/refs/tags/0.1.0.zip",
+  "hash": "61fef95f425f86bef7e7125562e4e1959effb1ff18db231f62b3f3abcd73533f",
+  "extract_dir": "scooped-0.1.0/_apps/git-ws",
+  "bin": [["git-ws.ps1", "gws"]],
+  "homepage": "https://github.com/mkoertgen/scooped/tree/main/_apps/git-ws",
+  "license": "Unlicense"
+}
