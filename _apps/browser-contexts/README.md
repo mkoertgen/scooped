@@ -111,22 +111,22 @@ Use `browser-contexts config` to see which browsers are detected on your system.
 
 ## Commands
 
-| Command                             | Description                           |
-| ----------------------------------- | ------------------------------------- |
-| `list`                              | Show all configured contexts          |
-| `<context>`                         | Quick access - open a context         |
-| `open <context> [urls]`             | Open context with optional extra URLs |
-| `add <name> [-b browser] [-u urls]` | Create a new context                  |
-| `remove <name> [-DeleteData]`       | Remove a context                      |
-| `urls <name> <url1> [url2...]`      | Set default URLs for a context        |
-| `add-url <name> <url1> [url2...]`   | Add URL(s) to a context (idempotent)  |
-| `remove-url <name> <url1> [url2...]`| Remove URL(s) from a context          |
-| `ps`                                | Show running browser contexts         |
-| `kill <context>`                    | Stop a running context                |
-| `export`                            | Export config to stdout (pipe to file)|
-| `import`                            | Import config from stdin              |
-| `config`                            | Show config and available browsers    |
-| `help`                              | Show help                             |
+| Command                              | Description                            |
+| ------------------------------------ | -------------------------------------- |
+| `list`                               | Show all configured contexts           |
+| `<context>`                          | Quick access - open a context          |
+| `open <context> [urls]`              | Open context with optional extra URLs  |
+| `add <name> [-b browser] [-u urls]`  | Create a new context                   |
+| `remove <name> [-DeleteData]`        | Remove a context                       |
+| `urls <name> <url1> [url2...]`       | Set default URLs for a context         |
+| `add-url <name> <url1> [url2...]`    | Add URL(s) to a context (idempotent)   |
+| `remove-url <name> <url1> [url2...]` | Remove URL(s) from a context           |
+| `ps`                                 | Show running browser contexts          |
+| `kill <context>`                     | Stop a running context                 |
+| `export`                             | Export config to stdout (pipe to file) |
+| `import`                             | Import config from stdin               |
+| `config`                             | Show config and available browsers     |
+| `help`                               | Show help                              |
 
 ## Tips
 
