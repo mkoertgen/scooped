@@ -30,8 +30,8 @@ This is the same technique Playwright uses for browser isolation - each context 
 ## Installation
 
 ```powershell
-scoop bucket add scooped https://github.com/mkoertgen/scooped
-scoop install browser-contexts
+scoop bucket add mko https://github.com/mkoertgen/scooped
+scoop install mko/browser-contexts
 ```
 
 ## Usage
@@ -119,6 +119,12 @@ Use `browser-contexts config` to see which browsers are detected on your system.
 | `add <name> [-b browser] [-u urls]` | Create a new context                  |
 | `remove <name> [-DeleteData]`       | Remove a context                      |
 | `urls <name> <url1> [url2...]`      | Set default URLs for a context        |
+| `add-url <name> <url1> [url2...]`   | Add URL(s) to a context (idempotent)  |
+| `remove-url <name> <url1> [url2...]`| Remove URL(s) from a context          |
+| `ps`                                | Show running browser contexts         |
+| `kill <context>`                    | Stop a running context                |
+| `export`                            | Export config to stdout (pipe to file)|
+| `import`                            | Import config from stdin              |
 | `config`                            | Show config and available browsers    |
 | `help`                              | Show help                             |
 
@@ -130,13 +136,13 @@ Use `browser-contexts config` to see which browsers are detected on your system.
 4. **Sync** - You can sign into browser sync separately in each context
 5. **Disk space** - Each context uses ~100-500MB depending on cache
 
-## Alias (Optional)
+## Alias
 
-Add to your PowerShell profile for shorter commands:
+The `bc` command is installed automatically as a shim.
 
 ```powershell
-Set-Alias bc browser-contexts
-# or even shorter aliases for your most-used contexts:
-function acme { browser-contexts acme @args }
-function contoso { browser-contexts contoso @args }
+# Use bc instead of browser-contexts
+bc list
+bc acme
+bc add contoso chrome
 ```
