@@ -6,10 +6,10 @@ function Get-Config {
     if (Test-Path $script:ConfigPath) {
         return Get-Content $script:ConfigPath | ConvertFrom-Json
     }
-    # Default config with empty aliases
+    # Default config with empty aliases (use PSCustomObject for consistency)
     return [PSCustomObject]@{
         browser = "chrome"
-        aliases = @{}
+        aliases = [PSCustomObject]@{}
     }
 }
 
@@ -199,12 +199,27 @@ function Show-Config {
     Write-Host "  Config file: $script:ConfigPath"
     Write-Host "  Chrome path: $(Get-ChromePath)"
 
-    if ($config.aliases -and $config.aliases.PSObject.Properties.Count -gt 0) {
-        Write-Host "`nAliases:" -ForegroundColor Cyan
-        foreach ($prop in $config.aliases.PSObject.Properties) {
-            Write-Host "  $($prop.Name) -> $($prop.Value)" -ForegroundColor White
+    $hasAliases = $false
+    if ($config.aliases) {
+        # Handle both PSCustomObject (from JSON) and Hashtable (default)
+        if ($config.aliases -is [hashtable]) {
+            $hasAliases = $config.aliases.Count -gt 0
+            if ($hasAliases) {
+                Write-Host "`nAliases:" -ForegroundColor Cyan
+                foreach ($key in $config.aliases.Keys) {
+                    Write-Host "  $key -> $($config.aliases[$key])" -ForegroundColor White
+                }
+            }
+        } elseif ($config.aliases.PSObject.Properties.Count -gt 0) {
+            $hasAliases = $true
+            Write-Host "`nAliases:" -ForegroundColor Cyan
+            foreach ($prop in $config.aliases.PSObject.Properties) {
+                Write-Host "  $($prop.Name) -> $($prop.Value)" -ForegroundColor White
+            }
         }
-    } else {
+    }
+
+    if (-not $hasAliases) {
         Write-Host "`n  No aliases configured. Use 'alias <name> <profile>' to add one."
     }
     Write-Host ""
