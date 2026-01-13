@@ -245,6 +245,160 @@ function Set-ContextUrls {
     }
 }
 
+function Add-ContextUrl {
+    param (
+        [Parameter(Mandatory)][string]$ContextName,
+        [Parameter(Mandatory)][string[]]$Urls
+    )
+
+    $config = Get-Config
+
+    if (-not ($config.contexts.PSObject.Properties.Name -contains $ContextName)) {
+        Write-Error "Context '$ContextName' not found."
+        return
+    }
+
+    $ctx = $config.contexts.$ContextName
+    $existingUrls = @()
+    if ($ctx.urls) { $existingUrls = @($ctx.urls) }
+
+    $added = @($Urls | Where-Object { $_ -notin $existingUrls })
+
+    if ($added.Count -eq 0) {
+        Write-Host "URLs already present in '$ContextName'." -ForegroundColor DarkGray
+        return
+    }
+
+    $newUrls = $existingUrls + $added
+    $config.contexts.$ContextName | Add-Member -NotePropertyName "urls" -NotePropertyValue $newUrls -Force
+    Save-Config $config
+
+    Write-Host "Added URL(s) to '$ContextName':" -ForegroundColor Green
+    foreach ($url in $added) {
+        Write-Host "  + $url" -ForegroundColor DarkGray
+    }
+}
+
+function Remove-ContextUrl {
+    param (
+        [Parameter(Mandatory)][string]$ContextName,
+        [Parameter(Mandatory)][string]$Url
+    )
+
+    $config = Get-Config
+
+    if (-not ($config.contexts.PSObject.Properties.Name -contains $ContextName)) {
+        Write-Error "Context '$ContextName' not found."
+        return
+    }
+
+    $ctx = $config.contexts.$ContextName
+    if (-not $ctx.urls) {
+        Write-Host "Context '$ContextName' has no URLs." -ForegroundColor Yellow
+        return
+    }
+
+    $newUrls = @($ctx.urls) | Where-Object { $_ -ne $Url }
+    $config.contexts.$ContextName | Add-Member -NotePropertyName "urls" -NotePropertyValue $newUrls -Force
+    Save-Config $config
+
+    Write-Host "Removed URL from '$ContextName':" -ForegroundColor Yellow
+    Write-Host "  - $Url" -ForegroundColor DarkGray
+}
+
+function Get-RunningContexts {
+    $config = Get-Config
+    $dataDir = if ($config.dataDir) { $config.dataDir } else { $script:DefaultDataDir }
+
+    $running = @()
+
+    # Find all browser processes with our data dir
+    $chromeProcs = Get-Process chrome, msedge, brave, firefox -ErrorAction SilentlyContinue
+    foreach ($proc in $chromeProcs) {
+        try {
+            $cmdLine = (Get-CimInstance Win32_Process -Filter "ProcessId=$($proc.Id)" -ErrorAction SilentlyContinue).CommandLine
+            if ($cmdLine -and $cmdLine -like "*$dataDir*") {
+                # Extract context name from path
+                foreach ($ctxName in $config.contexts.PSObject.Properties.Name) {
+                    if ($cmdLine -like "*$dataDir\$ctxName*" -or $cmdLine -like "*$dataDir/$ctxName*") {
+                        # Only add main browser process (no --type=)
+                        if ($cmdLine -notlike "*--type=*") {
+                            $running += [PSCustomObject]@{
+                                Context = $ctxName
+                                PID = $proc.Id
+                                Browser = $proc.ProcessName
+                                StartTime = $proc.StartTime
+                            }
+                        }
+                        break
+                    }
+                }
+            }
+        } catch {}
+    }
+    return $running
+}
+
+function Show-RunningContexts {
+    $running = Get-RunningContexts
+
+    Write-Host "`nRunning Contexts:" -ForegroundColor Cyan
+    Write-Host "-----------------"
+
+    if ($running.Count -eq 0) {
+        Write-Host "  No contexts currently running." -ForegroundColor DarkGray
+    } else {
+        foreach ($ctx in $running) {
+            $uptime = (Get-Date) - $ctx.StartTime
+            $uptimeStr = if ($uptime.TotalHours -ge 1) { "{0:N0}h {1:N0}m" -f $uptime.TotalHours, $uptime.Minutes } else { "{0:N0}m" -f $uptime.TotalMinutes }
+            Write-Host "  $($ctx.Context)" -ForegroundColor Green -NoNewline
+            Write-Host " ($($ctx.Browser), PID $($ctx.PID), up $uptimeStr)" -ForegroundColor DarkGray
+        }
+    }
+    Write-Host ""
+}
+
+function Stop-Context {
+    param (
+        [Parameter(Mandatory)][string]$ContextName,
+        [switch]$Force
+    )
+
+    $running = Get-RunningContexts | Where-Object { $_.Context -eq $ContextName }
+
+    if ($running.Count -eq 0) {
+        Write-Host "Context '$ContextName' is not running." -ForegroundColor Yellow
+        return
+    }
+
+    foreach ($ctx in $running) {
+        try {
+            Stop-Process -Id $ctx.PID -Force:$Force
+            Write-Host "Stopped context '$ContextName' (PID $($ctx.PID))" -ForegroundColor Green
+        } catch {
+            Write-Error "Failed to stop context '$ContextName': $_"
+        }
+    }
+}
+
+function Export-ContextConfig {
+    $config = Get-Config
+    $config | ConvertTo-Json -Depth 10
+}
+
+function Import-ContextConfig {
+    param ([Parameter(Mandatory)][string]$Path)
+
+    if (-not (Test-Path $Path)) {
+        Write-Error "File not found: $Path"
+        return
+    }
+
+    $newConfig = Get-Content $Path | ConvertFrom-Json
+    Save-Config $newConfig
+    Write-Host "Imported config from: $Path" -ForegroundColor Green
+}
+
 function Show-Config {
     $config = Get-Config
     $dataDir = if ($config.dataDir) { $config.dataDir } else { $script:DefaultDataDir }
@@ -280,7 +434,13 @@ Commands:
   open <context> [urls...]     Open context with optional extra URLs
   add <name> [-b browser] [-u urls]  Add a new context
   remove <name> [-DeleteData]  Remove a context
-  urls <name> <url1> [url2...] Set URLs for a context
+  urls <name> <url1> [url2...] Set URLs for a context (replaces all)
+  add-url <name> <url>         Add URL to a context
+  remove-url <name> <url>      Remove URL from a context
+  ps                           Show running contexts
+  kill <context>               Stop a running context
+  export                       Export config as JSON (pipe to file)
+  import <file>                Import config from JSON file
   config                       Show configuration and available browsers
   help                         Show this help
 
@@ -318,7 +478,23 @@ function Invoke-BrowserContexts {
     switch ($Command.ToLower()) {
         "help" { Show-Help }
         "list" { Show-Contexts }
+        "ps" { Show-RunningContexts }
+        "kill" {
+            if (-not $Arguments -or $Arguments.Count -eq 0) {
+                Write-Error "Usage: browser-contexts kill <context>"
+                return
+            }
+            Stop-Context -ContextName $Arguments[0] -Force
+        }
         "config" { Show-Config }
+        "export" { Export-ContextConfig }
+        "import" {
+            if (-not $Arguments -or $Arguments.Count -eq 0) {
+                Write-Error "Usage: browser-contexts import <file.json>"
+                return
+            }
+            Import-ContextConfig -Path $Arguments[0]
+        }
         "add" {
             if (-not $Arguments -or $Arguments.Count -eq 0) {
                 Write-Error "Usage: browser-contexts add <name> [-b browser] [-u urls]"
@@ -339,6 +515,20 @@ function Invoke-BrowserContexts {
                 return
             }
             Set-ContextUrls -ContextName $Arguments[0] -Urls $Arguments[1..($Arguments.Count - 1)]
+        }
+        "add-url" {
+            if (-not $Arguments -or $Arguments.Count -lt 2) {
+                Write-Error "Usage: browser-contexts add-url <name> <url>"
+                return
+            }
+            Add-ContextUrl -ContextName $Arguments[0] -Urls $Arguments[1..($Arguments.Count - 1)]
+        }
+        "remove-url" {
+            if (-not $Arguments -or $Arguments.Count -lt 2) {
+                Write-Error "Usage: browser-contexts remove-url <name> <url>"
+                return
+            }
+            Remove-ContextUrl -ContextName $Arguments[0] -Url $Arguments[1]
         }
         "open" {
             if (-not $Arguments -or $Arguments.Count -eq 0) {
