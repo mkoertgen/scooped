@@ -103,6 +103,7 @@ Config file: `~/.browser-contexts.json`
 ## Supported Browsers
 
 - **chrome** - Google Chrome
+- **chromium** - Ungoogled Chromium (no Google sign-in prompts)
 - **edge** - Microsoft Edge
 - **brave** - Brave Browser
 - **firefox** - Mozilla Firefox
@@ -135,6 +136,9 @@ Use `browser-contexts config` to see which browsers are detected on your system.
 3. **Bookmarks** - Each context has its own bookmarks
 4. **Sync** - You can sign into browser sync separately in each context
 5. **Disk space** - Each context uses ~100-500MB depending on cache
+6. **Camera/Microphone** - Permissions are per-context. Allow once per context via:
+   - `chrome://settings/content/camera`
+   - `chrome://settings/content/microphone`
 
 ## Alias
 
