@@ -1,10 +1,15 @@
 {
-  "version": "0.2.0",
-  "url": "https://github.com/mkoertgen/scooped/archive/refs/tags/0.2.0.zip",
-  "hash": "77B017D0E589818A2DC5C6E90AEE70FF199C7C24ED14837A8CBEE49F67D13EEF",
-  "extract_dir": "scooped-0.2.0/_apps/browser-contexts",
-  "bin": [["browser-contexts.ps1", "bc"]],
-  "homepage": "https://github.com/mkoertgen/scooped/tree/main/_apps/browser-contexts",
-  "license": "Unlicense",
-  "description": "Isolated browser sessions with separate SSO/cookie/storage state"
+    "version": "0.3.0",
+    "url": "https://github.com/mkoertgen/scooped/archive/refs/tags/0.3.0.zip",
+    "hash": "6092fbc6d7af8d34ff2bfd3b2ed4d27c69ccdc9768a43b462b626515d5a32540",
+    "extract_dir": "scooped-0.3.0/_apps/browser-contexts",
+    "bin": [
+        [
+            "browser-contexts.ps1",
+            "bc"
+        ]
+    ],
+    "homepage": "https://github.com/mkoertgen/scooped/tree/main/_apps/browser-contexts",
+    "license": "Unlicense",
+    "description": "Isolated browser sessions with separate SSO/cookie/storage state"
 }
