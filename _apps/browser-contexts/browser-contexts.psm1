@@ -267,6 +267,42 @@ function Show-Contexts {
   Write-Host ""
 }
 
+function Show-ContextDetail {
+  param (
+    [Parameter(Mandatory)][string]$ContextName
+  )
+
+  $config = Get-Config
+
+  if (-not ($config.contexts.PSObject.Properties.Name -contains $ContextName)) {
+    Write-Error "Context '$ContextName' not found. Use 'list' to see available contexts."
+    return
+  }
+
+  $ctx = $config.contexts.$ContextName
+  $browser = if ($ctx.browser) { $ctx.browser } else { "chrome" }
+  $dataDir = Get-ContextDataDir $ContextName
+  $exists = Test-Path $dataDir
+  $status = if ($exists) { "initialized" } else { "new" }
+
+  Write-Host "`nContext: $ContextName" -ForegroundColor Cyan
+  Write-Host "  browser:   $browser"
+  Write-Host "  status:    $status"
+  Write-Host "  dataDir:   $dataDir"
+
+  if ($ctx.workspace) {
+    Write-Host "  workspace: $($ctx.workspace)" -ForegroundColor Magenta
+  }
+
+  if ($ctx.urls -and $ctx.urls.Count -gt 0) {
+    Write-Host "  urls:"
+    foreach ($url in $ctx.urls) {
+      Write-Host "    - $url" -ForegroundColor DarkGray
+    }
+  }
+  Write-Host ""
+}
+
 function Open-Context {
   param (
     [Parameter(Mandatory)][string]$ContextName,
@@ -340,12 +376,20 @@ function Open-VSCodeWorkspace {
 
   $expandedPath = [System.Environment]::ExpandEnvironmentVariables($WorkspacePath)
 
-  # Check for WSL remote format: wsl://<distro>/<path> or wsl+<distro>://<path>
+  # Validate: must be a .code-workspace file
+  if (-not ($expandedPath -match '\.code-workspace$')) {
+    Write-Warning "Workspace must be a .code-workspace file: $expandedPath"
+    Write-Warning "Use 'code --folder-uri' for folders, or create a workspace file."
+    return
+  }
+
+  # Check for WSL remote format: wsl://<distro>/<path>
   if ($expandedPath -match '^wsl://([^/]+)(/.*)$') {
     $distro = $Matches[1]
     $wslPath = $Matches[2]
     Write-Host "Opening VS Code WSL workspace: $distro$wslPath" -ForegroundColor Magenta
-    Start-Process $vscodePath -ArgumentList "--remote", "wsl+$distro", "`"$wslPath`""
+    $fileUri = "vscode-remote://wsl+$distro$wslPath"
+    Start-Process $vscodePath -ArgumentList "--file-uri", "`"$fileUri`""
     return
   }
 
@@ -354,7 +398,8 @@ function Open-VSCodeWorkspace {
     $distro = $Matches[2]
     $wslPath = "/" + ($Matches[3] -replace '\\', '/')
     Write-Host "Opening VS Code WSL workspace: $distro$wslPath" -ForegroundColor Magenta
-    Start-Process $vscodePath -ArgumentList "--remote", "wsl+$distro", "`"$wslPath`""
+    $fileUri = "vscode-remote://wsl+$distro$wslPath"
+    Start-Process $vscodePath -ArgumentList "--file-uri", "`"$fileUri`""
     return
   }
 
@@ -449,34 +494,17 @@ function Set-ContextWorkspace {
 
   $expandedPath = [System.Environment]::ExpandEnvironmentVariables($WorkspacePath)
 
-  # Validate workspace path exists (skip validation for WSL URIs)
+  # Skip validation for WSL URIs (distro might not be running)
   $isWslUri = $expandedPath -match '^wsl://'
   $isWslUnc = $expandedPath -match '^\\\\wsl(\$|\.localhost)\\'
 
-  if ($isWslUri) {
-    # Validate WSL path by converting to UNC and checking
-    if ($expandedPath -match '^wsl://([^/]+)(/.*)$') {
-      $distro = $Matches[1]
-      $wslPath = $Matches[2]
-      $uncPath = "\\wsl.localhost\$distro" + ($wslPath -replace '/', '\')
-      if (Test-Path $uncPath) {
-        Write-Host "WSL path validated: $uncPath" -ForegroundColor DarkGray
-      } else {
-        Write-Warning "WSL path not found: $uncPath"
-        $response = Read-Host "Add anyway? (y/N)"
-        if ($response -ne "y") { return }
-      }
-    }
-  } elseif ($isWslUnc) {
+  if (-not $isWslUri -and -not $isWslUnc) {
+    # Only validate local Windows paths
     if (-not (Test-Path $expandedPath)) {
-      Write-Warning "WSL path not found: $expandedPath"
+      Write-Warning "Workspace not found: $expandedPath"
       $response = Read-Host "Add anyway? (y/N)"
       if ($response -ne "y") { return }
     }
-  } elseif (-not (Test-Path $expandedPath)) {
-    Write-Warning "Workspace not found: $expandedPath"
-    $response = Read-Host "Add anyway? (y/N)"
-    if ($response -ne "y") { return }
   }
 
   $config.contexts.$ContextName | Add-Member -NotePropertyName "workspace" -NotePropertyValue $WorkspacePath -Force
@@ -741,7 +769,7 @@ function Show-Config {
       Write-Host " (not found)" -ForegroundColor DarkGray
     }
   }
-  Write-Host "\nVS Code:" -ForegroundColor Cyan
+  Write-Host "`nVS Code:" -ForegroundColor Cyan
   $vscodePath = Get-VSCodePath
   if ($vscodePath) {
     Write-Host "  vscode" -ForegroundColor Green -NoNewline
@@ -761,6 +789,7 @@ Usage: browser-contexts <command> [options]
 
 Commands:
   list                         List all configured contexts
+  show <context>               Show config for a specific context
   <context>                    Open a context (quick access)
   open <context> [urls...]     Open context with optional extra URLs
   add <name> [-b browser] [-u urls] [-w workspace]  Add a new context
@@ -782,17 +811,16 @@ Options for 'add':
   -u, -Urls       URLs to open automatically
   -w, -Workspace  Path to VS Code workspace (local or WSL remote)
 
-Workspace formats:
-  C:\path\to\project.code-workspace      Local Windows workspace file
-  C:\path\to\folder                      Local folder
-  wsl://Ubuntu/home/user/project         WSL remote folder (shorthand)
-  \\wsl$\Ubuntu\home\user\project        WSL UNC path
+Workspace formats (must be .code-workspace files):
+  C:\path\to\project.code-workspace              Local Windows workspace file
+  wsl://Ubuntu/home/user/project.code-workspace  WSL remote workspace (shorthand)
+  \\wsl$\Ubuntu\home\user\project.code-workspace WSL UNC workspace path
 
 Examples:
   browser-contexts add acme -b chrome
   browser-contexts add contoso -b chrome -u "https://portal.azure.com"
   browser-contexts add project -b chrome -w "C:\Projects\project.code-workspace"
-  browser-contexts workspace acme "wsl://Ubuntu/home/user/acme"
+  browser-contexts workspace acme "wsl://Ubuntu/home/user/acme.code-workspace"
   browser-contexts urls acme "https://dev.azure.com/acme" "https://teams.microsoft.com"
   browser-contexts acme                       # Quick access (opens browser + workspace)
   browser-contexts open acme https://...      # With extra URL
@@ -830,6 +858,13 @@ function Invoke-BrowserContexts {
       Stop-Context -ContextName $Arguments[0] -Force
     }
     "config" { Show-Config }
+    "show" {
+      if (-not $Arguments -or $Arguments.Count -eq 0) {
+        Write-Error "Usage: browser-contexts show <context>"
+        return
+      }
+      Show-ContextDetail -ContextName $Arguments[0]
+    }
     "export" { Export-ContextConfig }
     "import" {
       if (-not $Arguments -or $Arguments.Count -eq 0) {

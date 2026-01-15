@@ -97,7 +97,7 @@ Config file: `~/.browser-contexts.json`
     "contoso": {
       "browser": "chrome",
       "urls": ["https://portal.azure.com", "https://dev.azure.com/contoso"],
-      "workspace": "wsl://Ubuntu/home/user/contoso"
+      "workspace": "wsl://Ubuntu/home/user/contoso.code-workspace"
     },
     "personal": {
       "browser": "firefox"
@@ -110,12 +110,11 @@ Config file: `~/.browser-contexts.json`
 
 The `workspace` field supports multiple formats:
 
-| Format         | Example                           | Description          |
-| -------------- | --------------------------------- | -------------------- |
-| Windows path   | `C:\work\project.code-workspace`  | Local workspace file |
-| Windows folder | `C:\work\project`                 | Local folder         |
-| WSL shorthand  | `wsl://Ubuntu/home/user/project`  | WSL remote folder    |
-| WSL UNC        | `\\wsl$\Ubuntu\home\user\project` | WSL UNC path         |
+| Format        | Example                                          | Description            |
+| ------------- | ------------------------------------------------ | ---------------------- |
+| Windows path  | `C:\work\project.code-workspace`                 | Local workspace file   |
+| WSL shorthand | `wsl://Ubuntu/home/user/project.code-workspace`  | WSL remote workspace   |
+| WSL UNC       | `\\wsl$\Ubuntu\home\user\project.code-workspace` | WSL UNC workspace path |
 
 WSL workspaces open VS Code with the Remote - WSL extension.
 
@@ -171,3 +170,27 @@ bc list
 bc acme
 bc add contoso chrome
 ```
+
+## Development
+
+For development and testing, add a wrapper function to your `$PROFILE`:
+
+```powershell
+function bcdev {
+  Import-Module "C:\path\to\browser-contexts.psm1" -Force
+  Invoke-BrowserContexts @args
+}
+```
+
+This allows testing local changes without reinstalling the scoop package:
+
+```powershell
+# Test commands with local module
+bcdev list
+bcdev add test -b chrome
+bcdev workspace myctx "C:\work\project.code-workspace"
+bcdev show myctx
+bcdev myctx
+```
+
+The `-Force` flag ensures the module is reloaded on each call, picking up any code changes immediately.
