@@ -46,9 +46,13 @@ browser-contexts add personal -b firefox
 browser-contexts urls acme "https://portal.azure.com" "https://dev.azure.com/acme"
 browser-contexts urls contoso "https://portal.azure.com" "https://dev.azure.com/contoso"
 
-# Quick access - just type the context name
-browser-contexts acme             # Opens isolated Chrome with acme session
-browser-contexts contoso          # Opens another isolated Chrome with contoso session
+# Add VS Code workspace (optional) - opens alongside browser
+browser-contexts workspace acme "C:\work\acme\acme.code-workspace"
+browser-contexts workspace contoso "C:\work\contoso\project.code-workspace"
+
+# Quick access - opens browser + workspace (if configured)
+browser-contexts acme             # Opens isolated Chrome with acme session + VS Code
+browser-contexts contoso          # Opens another isolated Chrome with contoso session + VS Code
 
 # Open with additional URLs
 browser-contexts open acme https://teams.microsoft.com
@@ -87,11 +91,13 @@ Config file: `~/.browser-contexts.json`
   "contexts": {
     "acme": {
       "browser": "chrome",
-      "urls": ["https://portal.azure.com", "https://dev.azure.com/acme"]
+      "urls": ["https://portal.azure.com", "https://dev.azure.com/acme"],
+      "workspace": "C:\\work\\acme\\acme.code-workspace"
     },
     "contoso": {
       "browser": "chrome",
-      "urls": ["https://portal.azure.com", "https://dev.azure.com/contoso"]
+      "urls": ["https://portal.azure.com", "https://dev.azure.com/contoso"],
+      "workspace": "wsl://Ubuntu/home/user/contoso"
     },
     "personal": {
       "browser": "firefox"
@@ -99,6 +105,19 @@ Config file: `~/.browser-contexts.json`
   }
 }
 ```
+
+## Workspace Formats
+
+The `workspace` field supports multiple formats:
+
+| Format         | Example                           | Description          |
+| -------------- | --------------------------------- | -------------------- |
+| Windows path   | `C:\work\project.code-workspace`  | Local workspace file |
+| Windows folder | `C:\work\project`                 | Local folder         |
+| WSL shorthand  | `wsl://Ubuntu/home/user/project`  | WSL remote folder    |
+| WSL UNC        | `\\wsl$\Ubuntu\home\user\project` | WSL UNC path         |
+
+WSL workspaces open VS Code with the Remote - WSL extension.
 
 ## Supported Browsers
 
@@ -112,22 +131,24 @@ Use `browser-contexts config` to see which browsers are detected on your system.
 
 ## Commands
 
-| Command                              | Description                            |
-| ------------------------------------ | -------------------------------------- |
-| `list`                               | Show all configured contexts           |
-| `<context>`                          | Quick access - open a context          |
-| `open <context> [urls]`              | Open context with optional extra URLs  |
-| `add <name> [-b browser] [-u urls]`  | Create a new context                   |
-| `remove <name> [-DeleteData]`        | Remove a context                       |
-| `urls <name> <url1> [url2...]`       | Set default URLs for a context         |
-| `add-url <name> <url1> [url2...]`    | Add URL(s) to a context (idempotent)   |
-| `remove-url <name> <url1> [url2...]` | Remove URL(s) from a context           |
-| `ps`                                 | Show running browser contexts          |
-| `kill <context>`                     | Stop a running context                 |
-| `export`                             | Export config to stdout (pipe to file) |
-| `import`                             | Import config from stdin               |
-| `config`                             | Show config and available browsers     |
-| `help`                               | Show help                              |
+| Command                                     | Description                            |
+| ------------------------------------------- | -------------------------------------- |
+| `list`                                      | Show all configured contexts           |
+| `<context>`                                 | Quick access - open a context          |
+| `open <context> [urls]`                     | Open context with optional extra URLs  |
+| `add <name> [-b browser] [-u urls] [-w ws]` | Create a new context                   |
+| `remove <name> [-DeleteData]`               | Remove a context                       |
+| `urls <name> <url1> [url2...]`              | Set default URLs for a context         |
+| `add-url <name> <url1> [url2...]`           | Add URL(s) to a context (idempotent)   |
+| `remove-url <name> <url1> [url2...]`        | Remove URL(s) from a context           |
+| `workspace <name> <path>`                   | Set VS Code workspace for a context    |
+| `remove-workspace <name>`                   | Remove workspace from a context        |
+| `ps`                                        | Show running browser contexts          |
+| `close <context>`                           | Close browser and VS Code for context  |
+| `export`                                    | Export config to stdout (pipe to file) |
+| `import`                                    | Import config from stdin               |
+| `config`                                    | Show config and available browsers     |
+| `help`                                      | Show help                              |
 
 ## Tips
 
