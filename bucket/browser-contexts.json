@@ -3,12 +3,7 @@
   "url": "https://github.com/mkoertgen/scooped/archive/refs/tags/browser-contexts/0.4.0.zip",
   "hash": "069e0a28ef190364454b06409f5fd816bf65f0067147aa70622c08c976649038",
   "extract_dir": "scooped-browser-contexts-0.4.0/_apps/browser-contexts",
-  "bin": [
-    [
-      "browser-contexts.ps1",
-      "bc"
-    ]
-  ],
+  "bin": [["browser-contexts.ps1", "bc"]],
   "homepage": "https://github.com/mkoertgen/scooped/tree/main/_apps/browser-contexts",
   "license": "Unlicense",
   "description": "Isolated browser sessions with separate SSO/cookie/storage state"

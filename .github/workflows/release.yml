@@ -54,11 +54,11 @@ jobs:
           TAG="${{ steps.parse.outputs.tag }}"
           HASH="${{ steps.hash.outputs.hash }}"
           REPO="${{ github.repository }}"
-          
+
           # GitHub archive folder name: scooped-<app>-<version> (slashes in tag become dashes)
           # e.g., tag "browser-contexts/0.4.0" -> folder "scooped-browser-contexts-0.4.0"
           ARCHIVE_DIR="scooped-${APP}-${VERSION}"
-          
+
           # Update bucket/<app>.json using jq
           jq --arg v "$VERSION" \
              --arg h "$HASH" \
@@ -69,7 +69,7 @@ jobs:
              '.version = $v | .hash = $h | .url = "https://github.com/\($repo)/archive/refs/tags/\($tag).zip" | .extract_dir = "\($archiveDir)/_apps/\($app)"' \
              "bucket/$APP.json" > tmp.json
           mv tmp.json "bucket/$APP.json"
-          
+
           echo "Updated bucket/$APP.json:"
           cat "bucket/$APP.json"
 
