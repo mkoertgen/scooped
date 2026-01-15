@@ -8,6 +8,7 @@ Isolated browser sessions with separate SSO/cookie/storage state. Each context g
 | ----------------------------------- | ------------------------------------------- |
 | `list`                              | Show all configured contexts                |
 | `<context>`                         | Quick access - open a context               |
+| `<context> <bookmark>`              | Open context with specific bookmark(s)      |
 | `show <context>`                    | Show details for a specific context         |
 | `open <context> [urls...]`          | Open context with optional extra URLs       |
 | `add <name> [-b browser] [-u urls]` | Create a new context                        |
@@ -15,6 +16,9 @@ Isolated browser sessions with separate SSO/cookie/storage state. Each context g
 | `urls <name> <url1> [url2...]`      | Set URLs for a context (replaces all)       |
 | `add-url <name> <url>`              | Add URL to a context (idempotent)           |
 | `remove-url <name> <url>`           | Remove URL from a context                   |
+| `bm <context>`                      | List bookmarks for a context                |
+| `bm <context> add <name> <url>`     | Add a named bookmark                        |
+| `bm <context> remove <name>`        | Remove a bookmark                           |
 | `workspace <name> <path>`           | Set VS Code workspace (.code-workspace)     |
 | `remove-workspace <name>`           | Remove workspace from a context             |
 | `ps`                                | Show running contexts with PID and uptime   |
@@ -22,6 +26,18 @@ Isolated browser sessions with separate SSO/cookie/storage state. Each context g
 | `export`                            | Export config as JSON (for backup/dotfiles) |
 | `import <file>`                     | Import config from JSON file                |
 | `config`                            | Show configuration and available browsers   |
+
+## Bookmarks
+
+Named URLs for on-demand opening (vs `urls` which auto-open):
+
+```powershell
+bc bm secunet add azure https://portal.azure.com
+bc bm secunet add s11-helpdesk https://helpdesk.syseleven.de
+bc bm secunet                    # List all bookmarks
+bc secunet azure                 # Open just the azure bookmark
+bc secunet azure s11-helpdesk    # Open multiple bookmarks
+```
 
 ## Workspace Support
 

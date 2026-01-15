@@ -97,7 +97,11 @@ Config file: `~/.browser-contexts.json`
     "contoso": {
       "browser": "chrome",
       "urls": ["https://portal.azure.com", "https://dev.azure.com/contoso"],
-      "workspace": "wsl://Ubuntu/home/user/contoso.code-workspace"
+      "workspace": "wsl://Ubuntu/home/user/contoso.code-workspace",
+      "bookmarks": {
+        "azure": "https://portal.azure.com",
+        "ado": "https://dev.azure.com/contoso"
+      }
     },
     "personal": {
       "browser": "firefox"
@@ -134,12 +138,16 @@ Use `browser-contexts config` to see which browsers are detected on your system.
 | ------------------------------------------- | -------------------------------------- |
 | `list`                                      | Show all configured contexts           |
 | `<context>`                                 | Quick access - open a context          |
+| `<context> <bookmark>`                      | Open context with specific bookmark(s) |
 | `open <context> [urls]`                     | Open context with optional extra URLs  |
 | `add <name> [-b browser] [-u urls] [-w ws]` | Create a new context                   |
 | `remove <name> [-DeleteData]`               | Remove a context                       |
 | `urls <name> <url1> [url2...]`              | Set default URLs for a context         |
 | `add-url <name> <url1> [url2...]`           | Add URL(s) to a context (idempotent)   |
 | `remove-url <name> <url1> [url2...]`        | Remove URL(s) from a context           |
+| `bm <context>`                              | List bookmarks for a context           |
+| `bm <context> add <name> <url>`             | Add a named bookmark                   |
+| `bm <context> remove <name>`                | Remove a bookmark                      |
 | `workspace <name> <path>`                   | Set VS Code workspace for a context    |
 | `remove-workspace <name>`                   | Remove workspace from a context        |
 | `ps`                                        | Show running browser contexts          |

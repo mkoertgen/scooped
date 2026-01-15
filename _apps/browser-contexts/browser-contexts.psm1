@@ -300,7 +300,96 @@ function Show-ContextDetail {
       Write-Host "    - $url" -ForegroundColor DarkGray
     }
   }
+
+  if ($ctx.bookmarks -and $ctx.bookmarks.PSObject.Properties.Count -gt 0) {
+    Write-Host "  bookmarks:"
+    foreach ($prop in $ctx.bookmarks.PSObject.Properties) {
+      Write-Host "    $($prop.Name): " -NoNewline -ForegroundColor Yellow
+      Write-Host $prop.Value -ForegroundColor DarkGray
+    }
+  }
   Write-Host ""
+}
+
+function Show-Bookmarks {
+  param (
+    [Parameter(Mandatory)][string]$ContextName
+  )
+
+  $config = Get-Config
+
+  if (-not ($config.contexts.PSObject.Properties.Name -contains $ContextName)) {
+    Write-Error "Context '$ContextName' not found."
+    return
+  }
+
+  $ctx = $config.contexts.$ContextName
+
+  if (-not $ctx.bookmarks -or $ctx.bookmarks.PSObject.Properties.Count -eq 0) {
+    Write-Host "No bookmarks for context '$ContextName'." -ForegroundColor DarkGray
+    Write-Host "Add with: browser-contexts bm $ContextName add <name> <url>" -ForegroundColor DarkGray
+    return
+  }
+
+  Write-Host "`nBookmarks for '$ContextName':" -ForegroundColor Cyan
+  foreach ($prop in $ctx.bookmarks.PSObject.Properties) {
+    Write-Host "  $($prop.Name): " -NoNewline -ForegroundColor Yellow
+    Write-Host $prop.Value
+  }
+  Write-Host ""
+}
+
+function Add-Bookmark {
+  param (
+    [Parameter(Mandatory)][string]$ContextName,
+    [Parameter(Mandatory)][string]$BookmarkName,
+    [Parameter(Mandatory)][string]$Url
+  )
+
+  $config = Get-Config
+
+  if (-not ($config.contexts.PSObject.Properties.Name -contains $ContextName)) {
+    Write-Error "Context '$ContextName' not found."
+    return
+  }
+
+  $ctx = $config.contexts.$ContextName
+
+  if (-not $ctx.bookmarks) {
+    $ctx | Add-Member -NotePropertyName "bookmarks" -NotePropertyValue ([PSCustomObject]@{}) -Force
+  }
+
+  $ctx.bookmarks | Add-Member -NotePropertyName $BookmarkName -NotePropertyValue $Url -Force
+  Save-Config $config
+
+  Write-Host "Added bookmark '$BookmarkName' to '$ContextName':" -ForegroundColor Green
+  Write-Host "  $Url"
+}
+
+function Remove-Bookmark {
+  param (
+    [Parameter(Mandatory)][string]$ContextName,
+    [Parameter(Mandatory)][string]$BookmarkName
+  )
+
+  $config = Get-Config
+
+  if (-not ($config.contexts.PSObject.Properties.Name -contains $ContextName)) {
+    Write-Error "Context '$ContextName' not found."
+    return
+  }
+
+  $ctx = $config.contexts.$ContextName
+
+  if (-not $ctx.bookmarks -or -not ($ctx.bookmarks.PSObject.Properties.Name -contains $BookmarkName)) {
+    Write-Error "Bookmark '$BookmarkName' not found in context '$ContextName'."
+    return
+  }
+
+  $ctx.bookmarks.PSObject.Properties.Remove($BookmarkName)
+  Save-Config $config
+
+  Write-Host "Removed bookmark '$BookmarkName' from '$ContextName'." -ForegroundColor Yellow
 }
 
 function Open-Context {
@@ -337,7 +426,20 @@ function Open-Context {
   # Collect URLs
   $urls = @()
   if ($ctx.urls) { $urls += $ctx.urls }
-  if ($ExtraUrls) { $urls += $ExtraUrls }
+
+  # Resolve ExtraUrls: could be bookmark names or actual URLs
+  if ($ExtraUrls) {
+    foreach ($item in $ExtraUrls) {
+      # Check if it's a bookmark name
+      if ($ctx.bookmarks -and ($ctx.bookmarks.PSObject.Properties.Name -contains $item)) {
+        $urls += $ctx.bookmarks.$item
+        Write-Host "  bookmark '$item': $($ctx.bookmarks.$item)" -ForegroundColor DarkGray
+      } else {
+        # Treat as URL
+        $urls += $item
+      }
+    }
+  }
 
   # Build arguments based on browser type
   if ($browser -eq "firefox") {
@@ -791,12 +893,16 @@ Commands:
   list                         List all configured contexts
   show <context>               Show config for a specific context
   <context>                    Open a context (quick access)
+  <context> <bookmark>         Open context with specific bookmark(s)
   open <context> [urls...]     Open context with optional extra URLs
   add <name> [-b browser] [-u urls] [-w workspace]  Add a new context
   remove <name> [-DeleteData]  Remove a context
   urls <name> <url1> [url2...] Set URLs for a context (replaces all)
   add-url <name> <url>         Add URL to a context
   remove-url <name> <url>      Remove URL from a context
+  bm <context>                 List bookmarks for a context
+  bm <context> add <n> <url>   Add a named bookmark
+  bm <context> remove <name>   Remove a bookmark
   workspace <name> <path>      Set VS Code workspace for a context
   remove-workspace <name>      Remove workspace from a context
   ps                           Show running contexts
@@ -822,7 +928,10 @@ Examples:
   browser-contexts add project -b chrome -w "C:\Projects\project.code-workspace"
   browser-contexts workspace acme "wsl://Ubuntu/home/user/acme.code-workspace"
   browser-contexts urls acme "https://dev.azure.com/acme" "https://teams.microsoft.com"
+  browser-contexts bm acme add azure https://portal.azure.com
+  browser-contexts bm acme                    # List bookmarks
   browser-contexts acme                       # Quick access (opens browser + workspace)
+  browser-contexts acme azure                 # Open with bookmark 'azure'
   browser-contexts open acme https://...      # With extra URL
   browser-contexts remove old-context -DeleteData
 
@@ -864,6 +973,23 @@ function Invoke-BrowserContexts {
         return
       }
       Show-ContextDetail -ContextName $Arguments[0]
+    }
+    { $_ -in "bm", "bookmark", "bookmarks" } {
+      if (-not $Arguments -or $Arguments.Count -eq 0) {
+        Write-Error "Usage: browser-contexts bm <context> [add|remove <name> [url]]"
+        return
+      }
+      $ctxName = $Arguments[0]
+      if ($Arguments.Count -eq 1) {
+        # Just show bookmarks
+        Show-Bookmarks -ContextName $ctxName
+      } elseif ($Arguments[1] -eq "add" -and $Arguments.Count -ge 4) {
+        Add-Bookmark -ContextName $ctxName -BookmarkName $Arguments[2] -Url $Arguments[3]
+      } elseif ($Arguments[1] -eq "remove" -and $Arguments.Count -ge 3) {
+        Remove-Bookmark -ContextName $ctxName -BookmarkName $Arguments[2]
+      } else {
+        Write-Error "Usage: browser-contexts bm <context> [add <name> <url> | remove <name>]"
+      }
     }
     "export" { Export-ContextConfig }
     "import" {
