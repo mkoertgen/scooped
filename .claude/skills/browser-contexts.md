@@ -83,3 +83,29 @@ bcdev workspace myctx "C:\work\project.code-workspace"
 bc export > ~/.dotfiles/.browser-contexts.json
 bc import ~/.dotfiles/.browser-contexts.json
 ```
+
+## Release Process
+
+Releases are triggered by pushing a tag in format `<app>/<version>`:
+
+```powershell
+# 1. Commit changes
+git add -A; git commit -m "feat(browser-contexts): add show command, workspace support"
+
+# 2. Push commit
+git push
+
+# 3. Tag and push to trigger release workflow
+git tag browser-contexts/0.5.0
+git push --tags
+```
+
+The GitHub workflow automatically:
+
+1. Downloads the tagged archive
+2. Calculates SHA256 hash
+3. Updates `bucket/browser-contexts.json` with version, hash, URL
+4. Commits and pushes the manifest update
+5. Creates a GitHub Release with auto-generated notes
+
+Users get the update via `scoop update browser-contexts`.
