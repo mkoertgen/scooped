@@ -98,20 +98,30 @@ function Get-WorkspaceBasename {
 function Close-VSCodeWindow {
   <#
   .SYNOPSIS
-  Close a VS Code window by matching its title pattern.
+  Close a VS Code window by matching workspace name (supports WSL).
 
   .DESCRIPTION
   Uses Windows API to find and close a specific VS Code window.
-  Useful for WSL workspaces where multiple windows share the same process.
+  For WSL workspaces, matches pattern: "<file> - <workspace> (Workspace) [WSL: <distro>]"
 
-  .PARAMETER TitlePattern
-  A string pattern to match against the window title.
+  .PARAMETER WorkspaceBasename
+  The workspace file basename (without .code-workspace extension).
   #>
-  param ([Parameter(Mandatory)][string]$TitlePattern)
+  param ([Parameter(Mandatory)][string]$WorkspaceBasename)
 
-  if ([WindowControl]::CloseWindowByTitlePattern($TitlePattern)) {
-    Write-Host "Closed VS Code window matching: $TitlePattern" -ForegroundColor Magenta
-    return $true
+  $windows = [WindowControl]::GetVSCodeWindows()
+
+  # Find WSL windows: "(Workspace) [WSL:"
+  $wslWindows = $windows | Where-Object { $_.Value -match '\(Workspace\) \[WSL:' }
+
+  foreach ($w in $wslWindows) {
+    # Pattern: "<optional-file> - <workspace> (Workspace) [WSL: <distro>] - Visual Studio Code"
+    # Or just: "<workspace> (Workspace) [WSL: <distro>] - Visual Studio Code" (no file open)
+    if ($w.Value -match "^(.+ - )?$([regex]::Escape($WorkspaceBasename)) \(Workspace\) \[WSL:") {
+      [WindowControl]::SendMessage($w.Key, [WindowControl]::WM_CLOSE, [IntPtr]::Zero, [IntPtr]::Zero) | Out-Null
+      Write-Host "Closed VS Code WSL window: $($w.Value)" -ForegroundColor Magenta
+      return $true
+    }
   }
   return $false
 }
@@ -803,12 +813,10 @@ function Stop-Context {
     $expandedPath = [System.Environment]::ExpandEnvironmentVariables($workspacePath)
 
     if (Test-IsWslWorkspace $expandedPath) {
-      # WSL workspace: close by window title (multiple windows share same process)
-      # Window title format: "<basename> [WSL: <distro>] - Visual Studio Code"
+      # WSL workspace: close by window title regex (multiple windows share same process)
       $basename = Get-WorkspaceBasename $expandedPath
-      $titlePattern = "$basename [WSL: "
 
-      if (Close-VSCodeWindow -TitlePattern $titlePattern) {
+      if (Close-VSCodeWindow -WorkspaceBasename $basename) {
         $closed = $true
       } else {
         Write-Host "No VS Code WSL window found for: $basename" -ForegroundColor Yellow
