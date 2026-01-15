@@ -1,0 +1,83 @@
+name: Release App
+
+on:
+  push:
+    tags:
+      - "*/*" # matches browser-contexts/0.4.0, git-ws/1.0.0, etc.
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Parse tag
+        id: parse
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          APP="${TAG%/*}"
+          VERSION="${TAG#*/}"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "app=$APP" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Releasing $APP version $VERSION"
+
+      - name: Validate app exists
+        run: |
+          if [ ! -f "bucket/${{ steps.parse.outputs.app }}.json" ]; then
+            echo "Error: bucket/${{ steps.parse.outputs.app }}.json not found"
+            exit 1
+          fi
+          if [ ! -d "_apps/${{ steps.parse.outputs.app }}" ]; then
+            echo "Error: _apps/${{ steps.parse.outputs.app }} not found"
+            exit 1
+          fi
+
+      - name: Calculate hash
+        id: hash
+        run: |
+          URL="https://github.com/${{ github.repository }}/archive/refs/tags/${{ steps.parse.outputs.tag }}.zip"
+          echo "Downloading $URL"
+          HASH=$(curl -sL "$URL" | sha256sum | cut -d' ' -f1)
+          echo "hash=$HASH" >> $GITHUB_OUTPUT
+          echo "Hash: $HASH"
+
+      - name: Update manifest
+        run: |
+          APP="${{ steps.parse.outputs.app }}"
+          VERSION="${{ steps.parse.outputs.version }}"
+          TAG="${{ steps.parse.outputs.tag }}"
+          HASH="${{ steps.hash.outputs.hash }}"
+          REPO="${{ github.repository }}"
+          
+          # Update bucket/<app>.json using jq
+          jq --arg v "$VERSION" \
+             --arg h "$HASH" \
+             --arg tag "$TAG" \
+             --arg repo "$REPO" \
+             '.version = $v | .hash = $h | .url = "https://github.com/\($repo)/archive/refs/tags/\($tag).zip" | .extract_dir = "scooped-\($v)/_apps/\(.extract_dir | split("/")[-1])"' \
+             "bucket/$APP.json" > tmp.json
+          mv tmp.json "bucket/$APP.json"
+          
+          echo "Updated bucket/$APP.json:"
+          cat "bucket/$APP.json"
+
+      - name: Commit and push
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email github-actions[bot]@users.noreply.github.com
+          git add "bucket/${{ steps.parse.outputs.app }}.json"
+          git commit -m "chore(${{ steps.parse.outputs.app }}): release ${{ steps.parse.outputs.version }}"
+          git push origin HEAD:main
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: "${{ steps.parse.outputs.app }} v${{ steps.parse.outputs.version }}"
+          tag_name: ${{ steps.parse.outputs.tag }}
+          generate_release_notes: true
