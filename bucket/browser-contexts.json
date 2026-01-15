@@ -2,7 +2,7 @@
   "version": "0.4.0",
   "url": "https://github.com/mkoertgen/scooped/archive/refs/tags/browser-contexts/0.4.0.zip",
   "hash": "069e0a28ef190364454b06409f5fd816bf65f0067147aa70622c08c976649038",
-  "extract_dir": "scooped-0.4.0/_apps/browser-contexts",
+  "extract_dir": "scooped-browser-contexts-0.4.0/_apps/browser-contexts",
   "bin": [
     [
       "browser-contexts.ps1",
