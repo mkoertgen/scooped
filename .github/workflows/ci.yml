@@ -3,7 +3,11 @@ name: Tests
 on:
   push:
     branches: [main]
+    paths:
+      - "bucket/**"
   pull_request:
+    paths:
+      - "bucket/**"
   workflow_dispatch:
 
 jobs:
