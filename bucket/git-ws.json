@@ -1,8 +1,8 @@
 {
-  "version": "0.3.0",
-  "url": "https://github.com/mkoertgen/scooped/archive/refs/tags/git-ws/0.3.0.zip",
-  "hash": "aafe65070d204247d468aafefa80b7a9db4242bcf8ec548807bf1fd3a3171c28",
-  "extract_dir": "scooped-git-ws-0.3.0/_apps/git-ws",
+  "version": "0.4.0",
+  "url": "https://github.com/mkoertgen/scooped/archive/refs/tags/git-ws/0.4.0.zip",
+  "hash": "86300d74cd8392359b2711fed1494fc995de8581f4d6e0dbbc12188f27275aff",
+  "extract_dir": "scooped-git-ws-0.4.0/_apps/git-ws",
   "bin": [
     [
       "git-ws.ps1",
