@@ -73,8 +73,37 @@ and performs git operations on each folder that contains a `.git` directory.
 $ gws status
 [>] repo-a
     main | clean | ✓ up to date
-[>] repo-b  
+[>] repo-b
     feature/xyz | 2 modified | ↑1 ahead
 [>] shared-lib
     main | clean | ✓ up to date
+```
+
+## Workspace Auto-Detection
+
+When run without `-Workspace`, the tool automatically detects the correct workspace:
+
+1. **Climb & Match**: Searches parent directories for `.code-workspace` files
+2. **Folder Check**: Verifies which workspace contains the current directory
+3. **Fallback**: Uses workspace files in current directory
+
+This means you can run `gws pull` from anywhere inside a workspace folder structure.
+
+## Development
+
+For development and testing, add a wrapper function to your `$PROFILE`:
+
+```powershell
+function gwsdev {
+  Import-Module "C:\path\to\git-ws.psm1" -Force
+  Set-GitWorkspace @args
+}
+```
+
+Test local changes without reinstalling:
+
+```powershell
+gwsdev status
+gwsdev pull
+gwsdev list
 ```

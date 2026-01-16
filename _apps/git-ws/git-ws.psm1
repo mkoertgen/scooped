@@ -7,6 +7,47 @@ function Find-WorkspaceFiles {
   Get-ChildItem -Path $Path -Filter "*.code-workspace" -ErrorAction SilentlyContinue
 }
 
+function Find-WorkspaceForPath {
+  <#
+  .SYNOPSIS
+  Find the workspace file that contains the given path.
+
+  .DESCRIPTION
+  Climbs up the directory tree looking for .code-workspace files,
+  then checks which workspace actually contains the current path
+  in its folders array.
+  #>
+  param(
+    [string]$CurrentPath = (Get-Location).Path
+  )
+
+  $dir = $CurrentPath
+  while ($dir) {
+    $wsFiles = Get-ChildItem -Path $dir -Filter "*.code-workspace" -ErrorAction SilentlyContinue
+    if ($wsFiles) {
+      foreach ($wsFile in $wsFiles) {
+        try {
+          $ws = Get-Content $wsFile.FullName -Raw | ConvertFrom-Json
+          $wsDir = Split-Path $wsFile.FullName -Parent
+          foreach ($folder in $ws.folders) {
+            $folderPath = Join-Path $wsDir $folder.path | Resolve-Path -ErrorAction SilentlyContinue
+            if ($folderPath -and $CurrentPath.ToLower().StartsWith($folderPath.Path.ToLower())) {
+              return $wsFile.FullName
+            }
+          }
+        } catch {
+          # Skip malformed workspace files
+          continue
+        }
+      }
+    }
+    $parent = Split-Path $dir -Parent
+    if ($parent -eq $dir) { break }  # Root reached
+    $dir = $parent
+  }
+  return $null
+}
+
 function Get-WorkspaceFolders {
   param(
     [Parameter(Mandatory)]
@@ -76,11 +117,9 @@ function Invoke-GitPull {
     $result = git pull --ff-only 2>&1
     if ($result -match "Already up to date") {
       Write-Host "    Up to date" -ForegroundColor DarkGray
-    }
-    elseif ($LASTEXITCODE -eq 0) {
+    } elseif ($LASTEXITCODE -eq 0) {
       Write-Host "    Updated" -ForegroundColor Green
-    }
-    else {
+    } else {
       Write-Host "    $result" -ForegroundColor Yellow
     }
     Pop-Location
@@ -115,8 +154,7 @@ function Invoke-GitPush {
     $result = git push 2>&1
     if ($LASTEXITCODE -eq 0) {
       Write-Host "    Pushed $ahead commit(s)" -ForegroundColor Green
-    }
-    else {
+    } else {
       Write-Host "    $result" -ForegroundColor Yellow
     }
     Pop-Location
@@ -145,14 +183,11 @@ function Invoke-GitRebase {
     $result = git pull --rebase 2>&1
     if ($result -match "Already up to date") {
       Write-Host "    Up to date" -ForegroundColor DarkGray
-    }
-    elseif ($result -match "Current branch .* is up to date") {
+    } elseif ($result -match "Current branch .* is up to date") {
       Write-Host "    Up to date" -ForegroundColor DarkGray
-    }
-    elseif ($LASTEXITCODE -eq 0) {
+    } elseif ($LASTEXITCODE -eq 0) {
       Write-Host "    Rebased" -ForegroundColor Green
-    }
-    else {
+    } else {
       Write-Host "    $result" -ForegroundColor Yellow
     }
     Pop-Location
@@ -181,8 +216,7 @@ function Get-GitStatus {
 
     if ($state) {
       Write-Host "[>] $name ($branch)$state" -ForegroundColor Yellow
-    }
-    else {
+    } else {
       Write-Host "[>] $name ($branch)" -ForegroundColor DarkGray
     }
     Pop-Location
@@ -190,7 +224,7 @@ function Get-GitStatus {
 }
 
 function Set-GitWorkspace {
-<#
+  <#
 .SYNOPSIS
 Git operations for VS Code workspace repositories.
 
@@ -231,47 +265,53 @@ Author: Marcel Koertgen
 
   # Auto-detect workspace files if not specified
   if (-not $Workspace) {
-    $wsFiles = Find-WorkspaceFiles
-    if ($wsFiles.Count -eq 0) {
-      Write-Error "No .code-workspace files found in current directory."
-      return
-    }
-    elseif ($wsFiles.Count -eq 1) {
-      $Workspace = $wsFiles[0].FullName
-      Write-Host "Using: $($wsFiles[0].Name)" -ForegroundColor DarkGray
-    }
-    else {
-      # Multiple workspaces: aggregate all
-      Write-Host "Found $($wsFiles.Count) workspaces, aggregating..." -ForegroundColor DarkGray
-      $allRepos = @()
-      foreach ($wsFile in $wsFiles) {
-        $allRepos += Get-WorkspaceFolders -WorkspaceFile $wsFile.FullName
-      }
-      $repos = $allRepos | Select-Object -Unique
-
-      if ($repos.Count -eq 0 -and $Verb -ne [CommandType]::help) {
-        Write-Error "No repos found in any workspace."
+    # First: Try to find workspace that contains current directory
+    $detected = Find-WorkspaceForPath
+    if ($detected) {
+      $Workspace = $detected
+      Write-Host "Detected: $(Split-Path $Workspace -Leaf)" -ForegroundColor DarkGray
+    } else {
+      # Fallback: Look for workspace files in current directory
+      $wsFiles = Find-WorkspaceFiles
+      if ($wsFiles.Count -eq 0) {
+        Write-Error "No workspace found. Use -Workspace to specify one."
         return
-      }
+      } elseif ($wsFiles.Count -eq 1) {
+        $Workspace = $wsFiles[0].FullName
+        Write-Host "Using: $($wsFiles[0].Name)" -ForegroundColor DarkGray
+      } else {
+        # Multiple workspaces: aggregate all
+        Write-Host "Found $($wsFiles.Count) workspaces, aggregating..." -ForegroundColor DarkGray
+        $allRepos = @()
+        foreach ($wsFile in $wsFiles) {
+          $allRepos += Get-WorkspaceFolders -WorkspaceFile $wsFile.FullName
+        }
+        $repos = $allRepos | Select-Object -Unique
 
-      switch ($Verb) {
-        ([CommandType]::pull) { Invoke-GitPull -Repos $repos }
-        ([CommandType]::push) { Invoke-GitPush -Repos $repos }
-        ([CommandType]::fetch) { Invoke-GitFetch -Repos $repos }
-        ([CommandType]::rebase) { Invoke-GitRebase -Repos $repos }
-        ([CommandType]::status) { Get-GitStatus -Repos $repos }
-        ([CommandType]::list) {
-          foreach ($wsFile in $wsFiles) {
-            Write-Host "Workspace: $($wsFile.Name)" -ForegroundColor Cyan
-            $wsRepos = Get-WorkspaceFolders -WorkspaceFile $wsFile.FullName
-            foreach ($repo in $wsRepos) {
-              Write-Host "  $(Split-Path $repo -Leaf)" -ForegroundColor Gray
+        if ($repos.Count -eq 0 -and $Verb -ne [CommandType]::help) {
+          Write-Error "No repos found in any workspace."
+          return
+        }
+
+        switch ($Verb) {
+          ([CommandType]::pull) { Invoke-GitPull -Repos $repos }
+          ([CommandType]::push) { Invoke-GitPush -Repos $repos }
+          ([CommandType]::fetch) { Invoke-GitFetch -Repos $repos }
+          ([CommandType]::rebase) { Invoke-GitRebase -Repos $repos }
+          ([CommandType]::status) { Get-GitStatus -Repos $repos }
+          ([CommandType]::list) {
+            foreach ($wsFile in $wsFiles) {
+              Write-Host "Workspace: $($wsFile.Name)" -ForegroundColor Cyan
+              $wsRepos = Get-WorkspaceFolders -WorkspaceFile $wsFile.FullName
+              foreach ($repo in $wsRepos) {
+                Write-Host "  $(Split-Path $repo -Leaf)" -ForegroundColor Gray
+              }
             }
           }
+          ([CommandType]::help) { Get-Help Set-GitWorkspace -Detailed }
         }
-        ([CommandType]::help) { Get-Help Set-GitWorkspace -Detailed }
+        return
       }
-      return
     }
   }
 

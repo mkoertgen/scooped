@@ -7,6 +7,10 @@
     [
       "git-ws.ps1",
       "gws"
+    ],
+    [
+      "git-ws.ps1",
+      "git-ws"
     ]
   ],
   "homepage": "https://github.com/mkoertgen/scooped/tree/main/_apps/git-ws",
