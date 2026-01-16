@@ -577,6 +577,57 @@ function Remove-Context {
   }
 }
 
+function Rename-Context {
+  param (
+    [Parameter(Mandatory)][string]$OldName,
+    [Parameter(Mandatory)][string]$NewName,
+    [switch]$Force
+  )
+
+  $config = Get-Config
+
+  # Check if old context exists
+  if (-not ($config.contexts.PSObject.Properties.Name -contains $OldName)) {
+    Write-Error "Context '$OldName' not found."
+    return
+  }
+
+  # Check if new name already exists
+  if ($config.contexts.PSObject.Properties.Name -contains $NewName) {
+    Write-Error "Context '$NewName' already exists."
+    return
+  }
+
+  # Check if context is running
+  $running = Get-RunningContexts | Where-Object { $_.Context -eq $OldName }
+  if ($running) {
+    if ($Force) {
+      Write-Host "Closing running context '$OldName'..." -ForegroundColor Yellow
+      Stop-Context -ContextName $OldName -Force
+      Start-Sleep -Milliseconds 500
+    } else {
+      Write-Error "Context '$OldName' is running. Close it first or use -Force."
+      return
+    }
+  }
+
+  # Rename data directory
+  $oldDataDir = Get-ContextDataDir $OldName
+  $newDataDir = Get-ContextDataDir $NewName
+  if (Test-Path $oldDataDir) {
+    Move-Item -Path $oldDataDir -Destination $newDataDir -Force
+    Write-Host "Renamed data directory: $OldName -> $NewName" -ForegroundColor DarkGray
+  }
+
+  # Rename config entry
+  $ctxData = $config.contexts.$OldName
+  $config.contexts.PSObject.Properties.Remove($OldName)
+  $config.contexts | Add-Member -NotePropertyName $NewName -NotePropertyValue $ctxData -Force
+  Save-Config $config
+
+  Write-Host "Renamed context '$OldName' -> '$NewName'" -ForegroundColor Green
+}
+
 function Set-ContextWorkspace {
   param (
     [Parameter(Mandatory)][string]$ContextName,
@@ -874,6 +925,7 @@ Commands:
   open <context> [urls...]     Open context with optional extra URLs
   add <name> [-b browser] [-u urls] [-w workspace]  Add a new context
   remove <name> [-DeleteData]  Remove a context
+  rename <old> <new> [-Force]  Rename a context (closes if running with -Force)
   urls <name> <url1> [url2...] Set URLs for a context (replaces all)
   add-url <name> <url>         Add URL to a context
   remove-url <name> <url>      Remove URL from a context
@@ -995,6 +1047,14 @@ function Invoke-BrowserContexts {
         return
       }
       Remove-Context -ContextName $Arguments[0] -DeleteData:$DeleteData
+    }
+    "rename" {
+      if (-not $Arguments -or $Arguments.Count -lt 2) {
+        Write-Error "Usage: browser-contexts rename <oldname> <newname> [-Force]"
+        return
+      }
+      $forceRename = $Arguments -contains "-Force" -or $Arguments -contains "-f"
+      Rename-Context -OldName $Arguments[0] -NewName $Arguments[1] -Force:$forceRename
     }
     "urls" {
       if (-not $Arguments -or $Arguments.Count -lt 2) {
