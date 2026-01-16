@@ -1,5 +1,72 @@
 enum CommandType { help; pull; push; fetch; rebase; status; list }
 
+# Windows API for getting foreground window title (VS Code workspace detection)
+if (-not ([System.Management.Automation.PSTypeName]'ForegroundWindow').Type) {
+  Add-Type -TypeDefinition @"
+using System;
+using System.Text;
+using System.Runtime.InteropServices;
+
+public class ForegroundWindow {
+    [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
+    [DllImport("user32.dll")] public static extern int GetWindowText(IntPtr hWnd, StringBuilder sb, int count);
+
+    public static string GetTitle() {
+        var sb = new StringBuilder(512);
+        GetWindowText(GetForegroundWindow(), sb, 512);
+        return sb.ToString();
+    }
+}
+"@
+}
+
+function Get-ActiveVSCodeWorkspaceName {
+  <#
+  .SYNOPSIS
+  Get the workspace name from the active VS Code window title.
+  #>
+  $title = [ForegroundWindow]::GetTitle()
+  # Pattern: "... - ws-colenio (Workspace) - Visual Studio Code"
+  # Or: "... - ws-colenio (Workspace) [WSL: Ubuntu] - Visual Studio Code"
+  if ($title -match '- (.+?) \(Workspace\).*Visual Studio Code') {
+    return $Matches[1].Trim()
+  }
+  return $null
+}
+
+function Find-WorkspaceByName {
+  <#
+  .SYNOPSIS
+  Find a workspace file by name, searching known workspace roots.
+  #>
+  param(
+    [Parameter(Mandatory)]
+    [string]$Name,
+    [string]$StartPath = (Get-Location).Path
+  )
+
+  $fileName = "$Name.code-workspace"
+
+  # First: Search up the directory tree
+  $dir = $StartPath
+  while ($dir) {
+    $wsFile = Get-ChildItem $dir -Filter $fileName -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($wsFile) { return $wsFile.FullName }
+    $parent = Split-Path $dir -Parent
+    if ($parent -eq $dir) { break }
+    $dir = $parent
+  }
+
+  # Second: Search known workspace roots (configurable via GIT_WORKSPACE_ROOT, default: ~/git)
+  $gitRoot = if ($env:GIT_WORKSPACE_ROOT) { $env:GIT_WORKSPACE_ROOT } else { Join-Path $env:USERPROFILE "git" }
+  if (Test-Path $gitRoot) {
+    $wsFile = Get-ChildItem $gitRoot -Filter $fileName -Depth 2 -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($wsFile) { return $wsFile.FullName }
+  }
+
+  return $null
+}
+
 function Find-WorkspaceFiles {
   param(
     [string]$Path = "."
@@ -265,13 +332,27 @@ Author: Marcel Koertgen
 
   # Auto-detect workspace files if not specified
   if (-not $Workspace) {
-    # First: Try to find workspace that contains current directory
-    $detected = Find-WorkspaceForPath
-    if ($detected) {
-      $Workspace = $detected
-      Write-Host "Detected: $(Split-Path $Workspace -Leaf)" -ForegroundColor DarkGray
-    } else {
-      # Fallback: Look for workspace files in current directory
+    # First: Try VS Code window title (works for folders outside climb path)
+    $wsName = Get-ActiveVSCodeWorkspaceName
+    if ($wsName) {
+      $detected = Find-WorkspaceByName -Name $wsName
+      if ($detected) {
+        $Workspace = $detected
+        Write-Host "Detected: $(Split-Path $Workspace -Leaf) (from VS Code)" -ForegroundColor DarkGray
+      }
+    }
+
+    # Second: Try to find workspace that contains current directory (climb + parse)
+    if (-not $Workspace) {
+      $detected = Find-WorkspaceForPath
+      if ($detected) {
+        $Workspace = $detected
+        Write-Host "Detected: $(Split-Path $Workspace -Leaf)" -ForegroundColor DarkGray
+      }
+    }
+
+    # Fallback: Look for workspace files in current directory
+    if (-not $Workspace) {
       $wsFiles = Find-WorkspaceFiles
       if ($wsFiles.Count -eq 0) {
         Write-Error "No workspace found. Use -Workspace to specify one."
