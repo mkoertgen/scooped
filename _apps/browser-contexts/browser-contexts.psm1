@@ -789,9 +789,11 @@ function Get-RunningContexts {
             if ($cmdLine -notlike "*--type=*") {
               $running += [PSCustomObject]@{
                 Context   = $ctxName
+                Type      = "browser"
                 PID       = $proc.Id
-                Browser   = $proc.ProcessName
+                Name      = $proc.ProcessName
                 StartTime = $proc.StartTime
+                Title     = $null
               }
             }
             break
@@ -800,6 +802,31 @@ function Get-RunningContexts {
       }
     } catch {}
   }
+
+  # Find VS Code windows for each context
+  $vsCodeWindows = [WindowControl]::GetVSCodeWindows()
+  foreach ($ctxName in $config.contexts.PSObject.Properties.Name) {
+    $ctx = $config.contexts.$ctxName
+    if ($ctx.workspace) {
+      $wsName = [System.IO.Path]::GetFileNameWithoutExtension($ctx.workspace)
+      foreach ($window in $vsCodeWindows) {
+        $title = $window.Value
+        # Match workspace name in VS Code title: "... - ws-name (Workspace)..."
+        if ($title -match "- $([regex]::Escape($wsName)) \(Workspace\)") {
+          $running += [PSCustomObject]@{
+            Context   = $ctxName
+            Type      = "vscode"
+            PID       = $null
+            Name      = "VS Code"
+            StartTime = $null
+            Title     = $title -replace ' - Visual Studio Code$', ''
+          }
+          break
+        }
+      }
+    }
+  }
+
   return $running
 }
 
@@ -812,11 +839,19 @@ function Show-RunningContexts {
   if ($running.Count -eq 0) {
     Write-Host "  No contexts currently running." -ForegroundColor DarkGray
   } else {
-    foreach ($ctx in $running) {
-      $uptime = (Get-Date) - $ctx.StartTime
-      $uptimeStr = if ($uptime.TotalHours -ge 1) { "{0:N0}h {1:N0}m" -f $uptime.TotalHours, $uptime.Minutes } else { "{0:N0}m" -f $uptime.TotalMinutes }
-      Write-Host "  $($ctx.Context)" -ForegroundColor Green -NoNewline
-      Write-Host " ($($ctx.Browser), PID $($ctx.PID), up $uptimeStr)" -ForegroundColor DarkGray
+    # Group by context
+    $grouped = $running | Group-Object Context
+    foreach ($group in $grouped) {
+      Write-Host "  $($group.Name)" -ForegroundColor Green
+      foreach ($item in $group.Group) {
+        if ($item.Type -eq 'browser') {
+          $uptime = (Get-Date) - $item.StartTime
+          $uptimeStr = if ($uptime.TotalHours -ge 1) { "{0:N0}h {1:N0}m" -f $uptime.TotalHours, $uptime.Minutes } else { "{0:N0}m" -f $uptime.TotalMinutes }
+          Write-Host "    browser: $($item.Name), PID $($item.PID), up $uptimeStr" -ForegroundColor DarkGray
+        } elseif ($item.Type -eq 'vscode') {
+          Write-Host "    vscode:  $($item.Title)" -ForegroundColor Magenta
+        }
+      }
     }
   }
   Write-Host ""

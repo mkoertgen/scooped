@@ -1,4 +1,5 @@
-enum CommandType { help; pull; push; fetch; rebase; status; list }
+# Known commands with special handling
+$KnownCommands = @('help', 'pull', 'push', 'fetch', 'rebase', 'status', 'list')
 
 # Windows API for getting foreground window title (VS Code workspace detection)
 if (-not ([System.Management.Automation.PSTypeName]'ForegroundWindow').Type) {
@@ -290,6 +291,28 @@ function Get-GitStatus {
   }
 }
 
+function Invoke-GitPassthrough {
+  <#
+  .SYNOPSIS
+  Run arbitrary git command on all repos (passthrough for aliases).
+  #>
+  param(
+    [Parameter(Mandatory)]
+    [string]$Command,
+    [Parameter(Mandatory)]
+    [string[]]$Repos
+  )
+
+  foreach ($repo in $Repos) {
+    $name = Split-Path $repo -Leaf
+    Write-Host "[>] $name" -ForegroundColor Cyan
+    Push-Location $repo
+    git $Command 2>&1 | ForEach-Object { Write-Host "    $_" -ForegroundColor DarkGray }
+    Pop-Location
+  }
+  Write-Host "[OK] Done" -ForegroundColor Green
+}
+
 function Set-GitWorkspace {
   <#
 .SYNOPSIS
@@ -300,7 +323,7 @@ Performs git operations (fetch, pull, status) on all repositories
 defined in a VS Code .code-workspace file.
 
 .PARAMETER Verb
-The command to run: pull, fetch, status, list, help
+The command to run: pull, fetch, status, list, help, or any git command/alias (passthrough)
 
 .PARAMETER Workspace
 Path to the .code-workspace file. Auto-detects if not specified.
@@ -324,7 +347,7 @@ Author: Marcel Koertgen
   param(
     [Parameter(Mandatory)]
     [ValidateNotNullOrEmpty()]
-    [CommandType]$Verb,
+    [string]$Verb,
 
     [Parameter()]
     [string]$Workspace
@@ -369,18 +392,18 @@ Author: Marcel Koertgen
         }
         $repos = $allRepos | Select-Object -Unique
 
-        if ($repos.Count -eq 0 -and $Verb -ne [CommandType]::help) {
+        if ($repos.Count -eq 0 -and $Verb -ne 'help') {
           Write-Error "No repos found in any workspace."
           return
         }
 
         switch ($Verb) {
-          ([CommandType]::pull) { Invoke-GitPull -Repos $repos }
-          ([CommandType]::push) { Invoke-GitPush -Repos $repos }
-          ([CommandType]::fetch) { Invoke-GitFetch -Repos $repos }
-          ([CommandType]::rebase) { Invoke-GitRebase -Repos $repos }
-          ([CommandType]::status) { Get-GitStatus -Repos $repos }
-          ([CommandType]::list) {
+          'pull' { Invoke-GitPull -Repos $repos }
+          'push' { Invoke-GitPush -Repos $repos }
+          'fetch' { Invoke-GitFetch -Repos $repos }
+          'rebase' { Invoke-GitRebase -Repos $repos }
+          'status' { Get-GitStatus -Repos $repos }
+          'list' {
             foreach ($wsFile in $wsFiles) {
               Write-Host "Workspace: $($wsFile.Name)" -ForegroundColor Cyan
               $wsRepos = Get-WorkspaceFolders -WorkspaceFile $wsFile.FullName
@@ -389,7 +412,8 @@ Author: Marcel Koertgen
               }
             }
           }
-          ([CommandType]::help) { Get-Help Set-GitWorkspace -Detailed }
+          'help' { Get-Help Set-GitWorkspace -Detailed }
+          default { Invoke-GitPassthrough -Command $Verb -Repos $repos }
         }
         return
       }
@@ -403,38 +427,38 @@ Author: Marcel Koertgen
 
   $repos = Get-WorkspaceFolders -WorkspaceFile $Workspace
 
-  if ($repos.Count -eq 0 -and $Verb -ne [CommandType]::help) {
+  if ($repos.Count -eq 0 -and $Verb -ne 'help') {
     Write-Error "No repos found in workspace: $Workspace"
     return
   }
 
   switch ($Verb) {
-    ([CommandType]::pull) {
+    'pull' {
       Invoke-GitPull -Repos $repos
     }
-    ([CommandType]::push) {
+    'push' {
       Invoke-GitPush -Repos $repos
     }
-    ([CommandType]::fetch) {
+    'fetch' {
       Invoke-GitFetch -Repos $repos
     }
-    ([CommandType]::rebase) {
+    'rebase' {
       Invoke-GitRebase -Repos $repos
     }
-    ([CommandType]::status) {
+    'status' {
       Get-GitStatus -Repos $repos
     }
-    ([CommandType]::list) {
+    'list' {
       Write-Host "Workspace: $Workspace" -ForegroundColor Cyan
       foreach ($repo in $repos) {
         Write-Host "  $(Split-Path $repo -Leaf)" -ForegroundColor Gray
       }
     }
-    ([CommandType]::help) {
+    'help' {
       Get-Help Set-GitWorkspace -Detailed
     }
     default {
-      Write-Error "Unsupported command: $Verb"
+      Invoke-GitPassthrough -Command $Verb -Repos $repos
     }
   }
 }
