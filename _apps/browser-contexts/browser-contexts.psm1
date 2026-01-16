@@ -487,7 +487,11 @@ function Open-VSCodeWorkspace {
     $wslPath = $Matches[2]
     Write-Host "Opening VS Code WSL workspace: $distro$wslPath" -ForegroundColor Magenta
     $fileUri = "vscode-remote://wsl+$distro$wslPath"
-    Start-Process $vscodePath -ArgumentList "--file-uri", "`"$fileUri`""
+    $psi = New-Object System.Diagnostics.ProcessStartInfo
+    $psi.FileName = $vscodePath
+    $psi.Arguments = "--file-uri `"$fileUri`""
+    $psi.UseShellExecute = $true
+    [void][System.Diagnostics.Process]::Start($psi)
     return
   }
 
@@ -497,14 +501,22 @@ function Open-VSCodeWorkspace {
     $wslPath = "/" + ($Matches[3] -replace '\\', '/')
     Write-Host "Opening VS Code WSL workspace: $distro$wslPath" -ForegroundColor Magenta
     $fileUri = "vscode-remote://wsl+$distro$wslPath"
-    Start-Process $vscodePath -ArgumentList "--file-uri", "`"$fileUri`""
+    $psi = New-Object System.Diagnostics.ProcessStartInfo
+    $psi.FileName = $vscodePath
+    $psi.Arguments = "--file-uri `"$fileUri`""
+    $psi.UseShellExecute = $true
+    [void][System.Diagnostics.Process]::Start($psi)
     return
   }
 
   # Regular Windows path
   if (Test-Path $expandedPath) {
     Write-Host "Opening VS Code workspace: $expandedPath" -ForegroundColor Magenta
-    Start-Process $vscodePath -ArgumentList "`"$expandedPath`""
+    $psi = New-Object System.Diagnostics.ProcessStartInfo
+    $psi.FileName = $vscodePath
+    $psi.Arguments = "`"$expandedPath`""
+    $psi.UseShellExecute = $true
+    [void][System.Diagnostics.Process]::Start($psi)
   } else {
     Write-Warning "Workspace not found: $expandedPath"
   }
@@ -867,12 +879,12 @@ function Stop-Context {
   $ctx = $config.contexts.$ContextName
   $closed = $false
 
-  # Close browser instances
-  $running = Get-RunningContexts | Where-Object { $_.Context -eq $ContextName }
+  # Close browser instances (only processes with valid PID)
+  $running = Get-RunningContexts | Where-Object { $_.Context -eq $ContextName -and $_.Type -eq "browser" -and $_.PID }
   foreach ($browser in $running) {
     try {
       Stop-Process -Id $browser.PID -Force:$Force
-      Write-Host "Closed browser ($($browser.Browser), PID $($browser.PID))" -ForegroundColor Green
+      Write-Host "Closed browser ($($browser.Name), PID $($browser.PID))" -ForegroundColor Green
       $closed = $true
     } catch {
       Write-Error "Failed to close browser: $_"
