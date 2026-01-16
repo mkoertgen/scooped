@@ -98,11 +98,12 @@ function Get-WorkspaceBasename {
 function Close-VSCodeWindow {
   <#
   .SYNOPSIS
-  Close a VS Code window by matching workspace name (supports WSL).
+  Close a VS Code window by matching workspace name.
 
   .DESCRIPTION
-  Uses Windows API to find and close a specific VS Code window.
-  For WSL workspaces, matches pattern: "<file> - <workspace> (Workspace) [WSL: <distro>]"
+  Uses Windows API to find and close a specific VS Code window by title.
+  Matches pattern: "<workspace> (Workspace)" in window title.
+  Works for both local and WSL workspaces.
 
   .PARAMETER WorkspaceBasename
   The workspace file basename (without .code-workspace extension).
@@ -111,31 +112,16 @@ function Close-VSCodeWindow {
 
   $windows = [WindowControl]::GetVSCodeWindows()
 
-  # Find WSL windows: "(Workspace) [WSL:"
-  $wslWindows = $windows | Where-Object { $_.Value -match '\(Workspace\) \[WSL:' }
-
-  foreach ($w in $wslWindows) {
-    # Pattern: "<optional-file> - <workspace> (Workspace) [WSL: <distro>] - Visual Studio Code"
-    # Or just: "<workspace> (Workspace) [WSL: <distro>] - Visual Studio Code" (no file open)
-    if ($w.Value -match "^(.+ - )?$([regex]::Escape($WorkspaceBasename)) \(Workspace\) \[WSL:") {
+  foreach ($w in $windows) {
+    # Pattern: "<optional-file> - <workspace> (Workspace) ..." or just "<workspace> (Workspace) ..."
+    # Covers both local and WSL windows
+    if ($w.Value -match "^(.+ - )?$([regex]::Escape($WorkspaceBasename)) \(Workspace\)") {
       [WindowControl]::SendMessage($w.Key, [WindowControl]::WM_CLOSE, [IntPtr]::Zero, [IntPtr]::Zero) | Out-Null
-      Write-Host "Closed VS Code WSL window: $($w.Value)" -ForegroundColor Magenta
+      Write-Host "Closed VS Code window: $($w.Value)" -ForegroundColor Magenta
       return $true
     }
   }
   return $false
-}
-
-function Test-IsWslWorkspace {
-  <#
-  .SYNOPSIS
-  Check if a workspace path is a WSL remote workspace.
-  #>
-  param ([Parameter(Mandatory)][string]$WorkspacePath)
-
-  return ($WorkspacePath -match '^wsl://' -or
-          $WorkspacePath -match '^\\\\wsl(\$|\.localhost)\\' -or
-          $WorkspacePath -match '^vscode-remote://wsl\+')
 }
 
 function Get-VSCodePath {
@@ -807,33 +793,16 @@ function Stop-Context {
     }
   }
 
-  # Close VS Code instances for this workspace
+  # Close VS Code instances for this workspace (using window title matching)
   if ($ctx -and $ctx.workspace) {
     $workspacePath = $ctx.workspace
     $expandedPath = [System.Environment]::ExpandEnvironmentVariables($workspacePath)
+    $basename = Get-WorkspaceBasename $expandedPath
 
-    if (Test-IsWslWorkspace $expandedPath) {
-      # WSL workspace: close by window title regex (multiple windows share same process)
-      $basename = Get-WorkspaceBasename $expandedPath
-
-      if (Close-VSCodeWindow -WorkspaceBasename $basename) {
-        $closed = $true
-      } else {
-        Write-Host "No VS Code WSL window found for: $basename" -ForegroundColor Yellow
-      }
+    if (Close-VSCodeWindow -WorkspaceBasename $basename) {
+      $closed = $true
     } else {
-      # Local workspace: close by process command line match
-      $codeProcs = Get-Process Code, "Code - Insiders" -ErrorAction SilentlyContinue
-      foreach ($proc in $codeProcs) {
-        try {
-          $cmdLine = (Get-CimInstance Win32_Process -Filter "ProcessId=$($proc.Id)" -ErrorAction SilentlyContinue).CommandLine
-          if ($cmdLine -and $cmdLine -like "*$expandedPath*") {
-            Stop-Process -Id $proc.Id -Force:$Force
-            Write-Host "Closed VS Code (PID $($proc.Id))" -ForegroundColor Magenta
-            $closed = $true
-          }
-        } catch {}
-      }
+      Write-Host "No VS Code window found for: $basename" -ForegroundColor Yellow
     }
   }
 
