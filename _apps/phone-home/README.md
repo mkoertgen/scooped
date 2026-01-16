@@ -1,24 +1,101 @@
-# Phone-Home
+# phone-home
 
-Quickly manage apps & services that are phoning home (start, stop, ...)
+Quickly manage apps & services that are "phoning home" (start, stop, check status).
 
-## Motivation
+## The Problem
 
-In consulting you might need to switch working context on the same workstation.
-Not all contexts allow using cloud-based virtual ones like [GitHub Codespaces](https://docs.github.com/en/codespaces/overview), [Azure Dev Box](https://learn.microsoft.com/en-us/azure/dev-box/), [GitPod](https://www.gitpod.io/), ...
+In consulting, you often switch between customer contexts on the same workstation. Each context may require different apps and services running:
 
-## Features
+- VPN clients (GlobalProtect, Cisco AnyConnect)
+- Cloud sync (OneDrive, Google Drive, Dropbox)
+- Chat apps (Teams, Slack)
+- Password managers
+- Docker, databases, etc.
 
-To reduce friction in manually launching & stopping apps, activating/deactivating services I came up with a little PowerShell script `phone-home.ps1` automating a good part of this.
-It acts as power switch for a configurable set of workloads (services & applications). Privilege escalation is handled transparently using [gsudo](https://github.com/gerardog/gsudo).
+Manually starting/stopping these for each context switch is tedious and easy to forget.
 
-Install using sccop
+## The Solution
 
-```shell
-$ scoop bucket add mko https://github.com/mkoertgen/scooped
-$ scoop install mko/phone-home
+`phone-home` (alias: `ph`) acts as a power switch for a configurable set of workloads. One command to stop everything, one to start everything.
+
+## Installation
+
+```powershell
+scoop bucket add mko https://github.com/mkoertgen/scooped
+scoop install mko/phone-home
 ```
 
-And here is what you can do with `phone-home` (usually aliased as `ph`)
+Requires [gsudo](https://github.com/gerardog/gsudo) for privilege escalation (stopping services).
+
+## Usage
+
+```powershell
+ph <command>
+```
+
+| Command    | Description                              |
+| ---------- | ---------------------------------------- |
+| `status`   | Show current state of apps and services  |
+| `startAll` | Start all configured apps and services   |
+| `stopAll`  | Stop all configured apps and services    |
+| `config`   | Show current configuration               |
+| `init`     | Create default config file               |
+| `check`    | Verify all configured apps are findable  |
+| `help`     | Show help                                |
+
+## Configuration
+
+Config file: `~/.phone-home.json`
+
+```json
+{
+  "services": [
+    { "name": "PanGPS" }
+  ],
+  "apps": [
+    { "name": "ms-teams" },
+    { "name": "OneDrive" },
+    { "name": "KeePassXC" },
+    { "name": "GoogleDriveFS", "link": "Google Drive" }
+  ]
+}
+```
+
+- **services**: Windows services (stopped and disabled when off)
+- **apps**: Applications (killed when off, launched when on)
+- **link**: Optional display name for Start Menu lookup
+
+## Examples
+
+```powershell
+# Check what's currently running
+$ ph status
+Services:
+  'PanGPS' is Stopped and set to Disabled.
+Apps:
+  'ms-teams' is not running.
+  'OneDrive' is not running.
+
+# Start everything for work
+$ ph startAll
+Started service 'PanGPS'.
+Started app 'ms-teams'.
+Started app 'OneDrive'.
+
+# End of day - shut it all down
+$ ph stopAll
+Stopped service 'PanGPS'.
+Disabled service 'PanGPS'.
+Stopped 'ms-teams'.
+Stopped 'OneDrive'.
+```
+
+## How It Works
+
+1. **Services**: Uses `Stop-Service`/`Start-Service` and `Set-Service -StartupType` via gsudo
+2. **Apps**: Uses `Stop-Process` to kill, searches PATH/Start Menu/Registry to launch
+3. **Privilege escalation**: Handled transparently via [gsudo](https://github.com/gerardog/gsudo)
+
+## Demo
 
 [![asciicast](https://asciinema.org/a/612778.svg)](https://asciinema.org/a/612778)

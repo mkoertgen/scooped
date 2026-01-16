@@ -2,6 +2,21 @@
 
 Git operations for VS Code workspace repositories.
 
+## The Problem
+
+Working with multi-repo projects in VS Code workspaces means running `git pull`, `git status`, etc. in each repository manually. Tedious and error-prone.
+
+## The Solution
+
+`git-ws` (alias: `gws`) runs git commands across all repositories in a VS Code workspace file at once.
+
+## Installation
+
+```powershell
+scoop bucket add mko https://github.com/mkoertgen/scooped
+scoop install mko/git-ws
+```
+
 ## Usage
 
 ```powershell
@@ -39,7 +54,27 @@ gws status
 gws list
 ```
 
-## How it works
+## How It Works
 
 The tool reads the `folders` array from the `.code-workspace` JSON file
 and performs git operations on each folder that contains a `.git` directory.
+
+```json
+{
+  "folders": [
+    { "path": "../repo-a" },
+    { "path": "../repo-b" },
+    { "path": "../shared-lib" }
+  ]
+}
+```
+
+```powershell
+$ gws status
+[>] repo-a
+    main | clean | ✓ up to date
+[>] repo-b  
+    feature/xyz | 2 modified | ↑1 ahead
+[>] shared-lib
+    main | clean | ✓ up to date
+```
