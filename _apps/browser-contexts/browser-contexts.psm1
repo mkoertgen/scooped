@@ -66,6 +66,11 @@ function Get-Config {
   }
 }
 
+function Test-ContextExists {
+  param ([object]$Config, [string]$Name)
+  return $Config.contexts.PSObject.Properties.Name -contains $Name
+}
+
 function Save-Config {
   param ([Parameter(Mandatory)][object]$Config)
   $Config | ConvertTo-Json -Depth 10 | Set-Content $script:ConfigPath
@@ -150,70 +155,46 @@ function Get-VSCodePath {
   return $null
 }
 
+# Browser path configurations: scoop path, standard paths, registry key
+$script:BrowserPaths = @{
+  chrome = @{
+    scoop = $null
+    paths = @("${env:ProgramFiles}\Google\Chrome\Application\chrome.exe", "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe", "${env:LocalAppData}\Google\Chrome\Application\chrome.exe")
+    registry = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe"
+  }
+  edge = @{
+    scoop = $null
+    paths = @("${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe", "${env:ProgramFiles}\Microsoft\Edge\Application\msedge.exe")
+  }
+  brave = @{
+    scoop = "scoop\apps\brave\current\brave.exe"
+    paths = @("${env:ProgramFiles}\BraveSoftware\Brave-Browser\Application\brave.exe", "${env:LocalAppData}\BraveSoftware\Brave-Browser\Application\brave.exe")
+  }
+  chromium = @{
+    scoop = "scoop\apps\ungoogled-chromium\current\chrome.exe"
+    paths = @("${env:ProgramFiles}\Chromium\Application\chrome.exe", "${env:LocalAppData}\Chromium\Application\chrome.exe")
+  }
+  firefox = @{
+    scoop = "scoop\apps\firefox\current\firefox.exe"
+    paths = @("${env:ProgramFiles}\Mozilla Firefox\firefox.exe", "${env:ProgramFiles(x86)}\Mozilla Firefox\firefox.exe")
+  }
+}
+
 function Get-BrowserPath {
   param ([string]$Browser = "chrome")
-
-  switch ($Browser.ToLower()) {
-    "chrome" {
-      $paths = @(
-        "${env:ProgramFiles}\Google\Chrome\Application\chrome.exe",
-        "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe",
-        "${env:LocalAppData}\Google\Chrome\Application\chrome.exe"
-      )
-      foreach ($path in $paths) {
-        if (Test-Path $path) { return $path }
-      }
-      $reg = Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe" -ErrorAction SilentlyContinue
-      if ($reg) { return $reg.'(default)' }
-    }
-    "edge" {
-      $paths = @(
-        "${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe",
-        "${env:ProgramFiles}\Microsoft\Edge\Application\msedge.exe"
-      )
-      foreach ($path in $paths) {
-        if (Test-Path $path) { return $path }
-      }
-    }
-    "brave" {
-      # Scoop installation
-      $scoopPath = Join-Path $env:USERPROFILE "scoop\apps\brave\current\brave.exe"
-      if (Test-Path $scoopPath) { return $scoopPath }
-      # Standard installations
-      $paths = @(
-        "${env:ProgramFiles}\BraveSoftware\Brave-Browser\Application\brave.exe",
-        "${env:LocalAppData}\BraveSoftware\Brave-Browser\Application\brave.exe"
-      )
-      foreach ($path in $paths) {
-        if (Test-Path $path) { return $path }
-      }
-    }
-    "chromium" {
-      # Ungoogled Chromium via scoop
-      $scoopPath = Join-Path $env:USERPROFILE "scoop\apps\ungoogled-chromium\current\chrome.exe"
-      if (Test-Path $scoopPath) { return $scoopPath }
-      # Portable/other installations
-      $paths = @(
-        "${env:ProgramFiles}\Chromium\Application\chrome.exe",
-        "${env:LocalAppData}\Chromium\Application\chrome.exe"
-      )
-      foreach ($path in $paths) {
-        if (Test-Path $path) { return $path }
-      }
-    }
-    "firefox" {
-      # Scoop installation
-      $scoopPath = Join-Path $env:USERPROFILE "scoop\apps\firefox\current\firefox.exe"
-      if (Test-Path $scoopPath) { return $scoopPath }
-      # Standard installations
-      $paths = @(
-        "${env:ProgramFiles}\Mozilla Firefox\firefox.exe",
-        "${env:ProgramFiles(x86)}\Mozilla Firefox\firefox.exe"
-      )
-      foreach ($path in $paths) {
-        if (Test-Path $path) { return $path }
-      }
-    }
+  $cfg = $script:BrowserPaths[$Browser.ToLower()]
+  if (-not $cfg) { return $null }
+  # Check scoop installation first
+  if ($cfg.scoop) {
+    $scoopPath = Join-Path $env:USERPROFILE $cfg.scoop
+    if (Test-Path $scoopPath) { return $scoopPath }
+  }
+  # Check standard paths
+  foreach ($path in $cfg.paths) { if (Test-Path $path) { return $path } }
+  # Check registry
+  if ($cfg.registry) {
+    $reg = Get-ItemProperty $cfg.registry -ErrorAction SilentlyContinue
+    if ($reg) { return $reg.'(default)' }
   }
   return $null
 }
@@ -270,7 +251,7 @@ function Show-ContextDetail {
 
   $config = Get-Config
 
-  if (-not ($config.contexts.PSObject.Properties.Name -contains $ContextName)) {
+  if (-not (Test-ContextExists $config $ContextName)) {
     Write-Error "Context '$ContextName' not found. Use 'list' to see available contexts."
     return
   }
@@ -314,7 +295,7 @@ function Show-Bookmarks {
 
   $config = Get-Config
 
-  if (-not ($config.contexts.PSObject.Properties.Name -contains $ContextName)) {
+  if (-not (Test-ContextExists $config $ContextName)) {
     Write-Error "Context '$ContextName' not found."
     return
   }
@@ -344,7 +325,7 @@ function Add-Bookmark {
 
   $config = Get-Config
 
-  if (-not ($config.contexts.PSObject.Properties.Name -contains $ContextName)) {
+  if (-not (Test-ContextExists $config $ContextName)) {
     Write-Error "Context '$ContextName' not found."
     return
   }
@@ -370,7 +351,7 @@ function Remove-Bookmark {
 
   $config = Get-Config
 
-  if (-not ($config.contexts.PSObject.Properties.Name -contains $ContextName)) {
+  if (-not (Test-ContextExists $config $ContextName)) {
     Write-Error "Context '$ContextName' not found."
     return
   }
@@ -397,7 +378,7 @@ function Open-Context {
   $config = Get-Config
 
   # Check if context exists
-  if (-not ($config.contexts.PSObject.Properties.Name -contains $ContextName)) {
+  if (-not (Test-ContextExists $config $ContextName)) {
     Write-Error "Context '$ContextName' not found. Use 'list' to see available contexts or 'add' to create one."
     return
   }
@@ -569,7 +550,7 @@ function Remove-Context {
 
   $config = Get-Config
 
-  if (-not ($config.contexts.PSObject.Properties.Name -contains $ContextName)) {
+  if (-not (Test-ContextExists $config $ContextName)) {
     Write-Error "Context '$ContextName' not found."
     return
   }
@@ -599,13 +580,13 @@ function Rename-Context {
   $config = Get-Config
 
   # Check if old context exists
-  if (-not ($config.contexts.PSObject.Properties.Name -contains $OldName)) {
+  if (-not (Test-ContextExists $config $OldName)) {
     Write-Error "Context '$OldName' not found."
     return
   }
 
   # Check if new name already exists
-  if ($config.contexts.PSObject.Properties.Name -contains $NewName) {
+  if (Test-ContextExists $config $NewName) {
     Write-Error "Context '$NewName' already exists."
     return
   }
@@ -648,7 +629,7 @@ function Set-ContextWorkspace {
 
   $config = Get-Config
 
-  if (-not ($config.contexts.PSObject.Properties.Name -contains $ContextName)) {
+  if (-not (Test-ContextExists $config $ContextName)) {
     Write-Error "Context '$ContextName' not found."
     return
   }
@@ -682,7 +663,7 @@ function Remove-ContextWorkspace {
 
   $config = Get-Config
 
-  if (-not ($config.contexts.PSObject.Properties.Name -contains $ContextName)) {
+  if (-not (Test-ContextExists $config $ContextName)) {
     Write-Error "Context '$ContextName' not found."
     return
   }
@@ -707,7 +688,7 @@ function Set-ContextUrls {
 
   $config = Get-Config
 
-  if (-not ($config.contexts.PSObject.Properties.Name -contains $ContextName)) {
+  if (-not (Test-ContextExists $config $ContextName)) {
     Write-Error "Context '$ContextName' not found."
     return
   }
@@ -729,7 +710,7 @@ function Add-ContextUrl {
 
   $config = Get-Config
 
-  if (-not ($config.contexts.PSObject.Properties.Name -contains $ContextName)) {
+  if (-not (Test-ContextExists $config $ContextName)) {
     Write-Error "Context '$ContextName' not found."
     return
   }
@@ -763,7 +744,7 @@ function Remove-ContextUrl {
 
   $config = Get-Config
 
-  if (-not ($config.contexts.PSObject.Properties.Name -contains $ContextName)) {
+  if (-not (Test-ContextExists $config $ContextName)) {
     Write-Error "Context '$ContextName' not found."
     return
   }
