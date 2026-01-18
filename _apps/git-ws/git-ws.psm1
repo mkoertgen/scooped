@@ -21,6 +21,24 @@ public class ForegroundWindow {
 "@
 }
 
+function ConvertFrom-Jsonc {
+  <#
+  .SYNOPSIS
+  Convert JSONC (JSON with Comments) to a PowerShell object.
+  Handles trailing commas and // comments that VS Code workspace files may contain.
+  #>
+  param(
+    [Parameter(Mandatory, ValueFromPipeline)]
+    [string]$InputObject
+  )
+  # Remove single-line comments (// ...)
+  $json = $InputObject -replace '(?m)^\s*//.*$', ''
+  $json = $json -replace '//[^"]*$', ''
+  # Remove trailing commas before ] or }
+  $json = $json -replace ',\s*([\]\}])', '$1'
+  return $json | ConvertFrom-Json
+}
+
 function Get-ActiveVSCodeWorkspaceName {
   <#
   .SYNOPSIS
@@ -95,7 +113,7 @@ function Find-WorkspaceForPath {
     if ($wsFiles) {
       foreach ($wsFile in $wsFiles) {
         try {
-          $ws = Get-Content $wsFile.FullName -Raw | ConvertFrom-Json
+          $ws = Get-Content $wsFile.FullName -Raw | ConvertFrom-Jsonc
           $wsDir = Split-Path $wsFile.FullName -Parent
           foreach ($folder in $ws.folders) {
             $folderPath = Join-Path $wsDir $folder.path | Resolve-Path -ErrorAction SilentlyContinue
@@ -128,7 +146,7 @@ function Get-WorkspaceFolders {
   }
 
   $wsDir = Split-Path $WorkspaceFile -Parent
-  $ws = Get-Content $WorkspaceFile | ConvertFrom-Json
+  $ws = Get-Content $WorkspaceFile -Raw | ConvertFrom-Jsonc
 
   $folders = @()
   foreach ($folder in $ws.folders) {
