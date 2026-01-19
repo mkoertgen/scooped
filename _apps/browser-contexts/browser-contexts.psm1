@@ -130,8 +130,15 @@ function Close-VSCodeWindow {
 }
 
 function Get-VSCodePath {
-  # Try VS Code
+  # Prefer CLI wrapper (code.cmd) - properly detaches from console
+  # The CLI wrapper handles the console detachment correctly on first launch
+  $codeCli = Get-Command "code" -ErrorAction SilentlyContinue
+  if ($codeCli) { return $codeCli.Source }
+
+  # Fallback to Code.exe if CLI not in PATH
   $paths = @(
+    "${env:LocalAppData}\Programs\Microsoft VS Code\bin\code.cmd",
+    "${env:ProgramFiles}\Microsoft VS Code\bin\code.cmd",
     "${env:LocalAppData}\Programs\Microsoft VS Code\Code.exe",
     "${env:ProgramFiles}\Microsoft VS Code\Code.exe"
   )
@@ -141,6 +148,8 @@ function Get-VSCodePath {
 
   # Try VS Code Insiders
   $insiderPaths = @(
+    "${env:LocalAppData}\Programs\Microsoft VS Code Insiders\bin\code-insiders.cmd",
+    "${env:ProgramFiles}\Microsoft VS Code Insiders\bin\code-insiders.cmd",
     "${env:LocalAppData}\Programs\Microsoft VS Code Insiders\Code - Insiders.exe",
     "${env:ProgramFiles}\Microsoft VS Code Insiders\Code - Insiders.exe"
   )
@@ -149,8 +158,10 @@ function Get-VSCodePath {
   }
 
   # Try scoop installations
-  $scoopVSCode = Join-Path $env:USERPROFILE "scoop\apps\vscode\current\Code.exe"
+  $scoopVSCode = Join-Path $env:USERPROFILE "scoop\apps\vscode\current\bin\code.cmd"
   if (Test-Path $scoopVSCode) { return $scoopVSCode }
+  $scoopVSCodeExe = Join-Path $env:USERPROFILE "scoop\apps\vscode\current\Code.exe"
+  if (Test-Path $scoopVSCodeExe) { return $scoopVSCodeExe }
 
   return $null
 }
@@ -468,11 +479,7 @@ function Open-VSCodeWorkspace {
     $wslPath = $Matches[2]
     Write-Host "Opening VS Code WSL workspace: $distro$wslPath" -ForegroundColor Magenta
     $fileUri = "vscode-remote://wsl+$distro$wslPath"
-    $psi = New-Object System.Diagnostics.ProcessStartInfo
-    $psi.FileName = $vscodePath
-    $psi.Arguments = "--file-uri `"$fileUri`""
-    $psi.UseShellExecute = $true
-    [void][System.Diagnostics.Process]::Start($psi)
+    Start-Process $vscodePath -ArgumentList "--file-uri", "`"$fileUri`"" -NoNewWindow
     return
   }
 
@@ -482,22 +489,14 @@ function Open-VSCodeWorkspace {
     $wslPath = "/" + ($Matches[3] -replace '\\', '/')
     Write-Host "Opening VS Code WSL workspace: $distro$wslPath" -ForegroundColor Magenta
     $fileUri = "vscode-remote://wsl+$distro$wslPath"
-    $psi = New-Object System.Diagnostics.ProcessStartInfo
-    $psi.FileName = $vscodePath
-    $psi.Arguments = "--file-uri `"$fileUri`""
-    $psi.UseShellExecute = $true
-    [void][System.Diagnostics.Process]::Start($psi)
+    Start-Process $vscodePath -ArgumentList "--file-uri", "`"$fileUri`"" -NoNewWindow
     return
   }
 
   # Regular Windows path
   if (Test-Path $expandedPath) {
     Write-Host "Opening VS Code workspace: $expandedPath" -ForegroundColor Magenta
-    $psi = New-Object System.Diagnostics.ProcessStartInfo
-    $psi.FileName = $vscodePath
-    $psi.Arguments = "`"$expandedPath`""
-    $psi.UseShellExecute = $true
-    [void][System.Diagnostics.Process]::Start($psi)
+    Start-Process $vscodePath -ArgumentList "`"$expandedPath`"" -NoNewWindow
   } else {
     Write-Warning "Workspace not found: $expandedPath"
   }
