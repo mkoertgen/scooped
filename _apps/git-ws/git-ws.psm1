@@ -318,14 +318,20 @@ function Invoke-GitPassthrough {
     [Parameter(Mandatory)]
     [string]$Command,
     [Parameter(Mandatory)]
-    [string[]]$Repos
+    [string[]]$Repos,
+    [Parameter()]
+    [string[]]$Args
   )
 
   foreach ($repo in $Repos) {
     $name = Split-Path $repo -Leaf
     Write-Host "[>] $name" -ForegroundColor Cyan
     Push-Location $repo
-    git $Command 2>&1 | ForEach-Object { Write-Host "    $_" -ForegroundColor DarkGray }
+    if ($Args) {
+      git $Command $Args 2>&1 | ForEach-Object { Write-Host "    $_" -ForegroundColor DarkGray }
+    } else {
+      git $Command 2>&1 | ForEach-Object { Write-Host "    $_" -ForegroundColor DarkGray }
+    }
     Pop-Location
   }
   Write-Host "[OK] Done" -ForegroundColor Green
@@ -363,13 +369,23 @@ Author: Marcel Koertgen
 #>
 
   param(
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory, Position=0)]
     [ValidateNotNullOrEmpty()]
     [string]$Verb,
 
-    [Parameter()]
-    [string]$Workspace
+    [Parameter(Position=1)]
+    [string]$Workspace,
+
+    [Parameter(ValueFromRemainingArguments)]
+    [string[]]$RemainingArgs
   )
+
+  # If $Workspace doesn't look like a workspace file path, treat it as part of args
+  if ($Workspace -and -not ($Workspace -match '\.code-workspace$|[\\/]')) {
+    # $Workspace is actually an argument for the command, not a workspace path
+    $RemainingArgs = @($Workspace) + $RemainingArgs
+    $Workspace = $null
+  }
 
   # Auto-detect workspace files if not specified
   if (-not $Workspace) {
@@ -431,7 +447,7 @@ Author: Marcel Koertgen
             }
           }
           'help' { Get-Help Set-GitWorkspace -Detailed }
-          default { Invoke-GitPassthrough -Command $Verb -Repos $repos }
+          default { Invoke-GitPassthrough -Command $Verb -Repos $repos -Args $RemainingArgs }
         }
         return
       }
@@ -476,7 +492,7 @@ Author: Marcel Koertgen
       Get-Help Set-GitWorkspace -Detailed
     }
     default {
-      Invoke-GitPassthrough -Command $Verb -Repos $repos
+      Invoke-GitPassthrough -Command $Verb -Repos $repos -Args $RemainingArgs
     }
   }
 }
