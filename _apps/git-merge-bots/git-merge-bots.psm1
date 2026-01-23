@@ -89,7 +89,7 @@ function Invoke-ListBotPRs {
     if (-not $Repo) {
         $Repo = Get-CurrentRepo
         if (-not $Repo) {
-            Write-Error "Not in a git repository. Use -Repo owner/repo"
+            Write-Host "Skipped: Not a GitHub repository" -ForegroundColor DarkGray
             return
         }
     }
@@ -148,7 +148,7 @@ function Invoke-MergeBotPRs {
     if (-not $Repo) {
         $Repo = Get-CurrentRepo
         if (-not $Repo) {
-            Write-Error "Not in a git repository. Use -Repo owner/repo"
+            Write-Host "Skipped: Not a GitHub repository" -ForegroundColor DarkGray
             return
         }
     }
