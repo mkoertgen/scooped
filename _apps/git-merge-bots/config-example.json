@@ -1,0 +1,24 @@
+{
+  "bots": {
+    "dependabot": {
+      "users": ["dependabot[bot]", "dependabot-preview[bot]"],
+      "enabled": true
+    },
+    "renovate": {
+      "users": ["renovate[bot]", "renovatebot"],
+      "enabled": true
+    },
+    "snyk": {
+      "users": ["snyk-bot"],
+      "enabled": true
+    }
+  },
+  "mergeStrategy": "rebase",
+  "deleteBranch": true,
+  "skipCI": false,
+  "filters": {
+    "excludeRepos": [],
+    "onlyPatch": false,
+    "requireCI": true
+  }
+}
