@@ -1,0 +1,13 @@
+{
+  "version": "0.1.0",
+  "url": "https://github.com/mkoertgen/scooped/archive/refs/tags/git-merge-bots/0.1.0.zip",
+  "hash": "0038694e9f88bd348875d2fa3313dbace50625ba8829ad613db4062784a5638a",
+  "extract_dir": "scooped-git-merge-bots-0.1.0/_apps/git-merge-bots",
+  "bin": [
+    ["git-merge-bots.ps1", "git-merge-bots"],
+    ["git-merge-bots.ps1", "gmb"]
+  ],
+  "homepage": "https://github.com/mkoertgen/scooped/tree/main/_apps/git-merge-bots",
+  "license": "Unlicense",
+  "description": "Automatically merge bot PRs (Dependabot, Renovate, Snyk)"
+}
