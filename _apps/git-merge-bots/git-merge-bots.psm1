@@ -1,4 +1,4 @@
-# git-merge-bots - Automatically merge bot PRs (Dependabot, Renovate, etc.)
+﻿# git-merge-bots - Automatically merge bot PRs (Dependabot, Renovate, etc.)
 # Cross-platform PowerShell module (PS 5.1+ and pwsh compatible)
 
 $ErrorActionPreference = 'Stop'
@@ -100,7 +100,7 @@ function Invoke-ListBotPRs {
 
     $prs = Get-BotPRs -Repo $Repo -Bots $Bots -Status $Status
 
-    if ($prs.Count -eq 0) {
+    if (-not $prs -or @($prs).Count -eq 0) {
         Write-Host "No bot PRs found." -ForegroundColor Yellow
         return
     }
@@ -121,7 +121,7 @@ function Invoke-ListBotPRs {
         Write-Host ""
     }
 
-    Write-Host "Total: $($prs.Count) bot PRs" -ForegroundColor Cyan
+    Write-Host "Total: $(@($prs).Count) bot PRs" -ForegroundColor Cyan
 }
 
 function Invoke-MergeBotPRs {
@@ -163,7 +163,7 @@ function Invoke-MergeBotPRs {
 
     $prs = Get-BotPRs -Repo $Repo -Bots $Bots -Status 'open'
 
-    if ($prs.Count -eq 0) {
+    if (-not $prs -or @($prs).Count -eq 0) {
         Write-Host "No bot PRs to merge." -ForegroundColor Yellow
         return
     }
@@ -264,35 +264,41 @@ function Invoke-GitMergeBots {
     switch ($Command) {
         'list' {
             $params = @{}
-            for ($i = 0; $i -lt $RemainingArgs.Count; $i++) {
-                switch ($RemainingArgs[$i]) {
-                    '-Repo' { $params.Repo = $RemainingArgs[++$i] }
-                    '-Bots' { $params.Bots = $RemainingArgs[++$i] -split ',' }
-                    '-Status' { $params.Status = $RemainingArgs[++$i] }
+            if ($RemainingArgs) {
+                for ($i = 0; $i -lt @($RemainingArgs).Count; $i++) {
+                    switch ($RemainingArgs[$i]) {
+                        '-Repo' { $params.Repo = $RemainingArgs[++$i] }
+                        '-Bots' { $params.Bots = $RemainingArgs[++$i] -split ',' }
+                        '-Status' { $params.Status = $RemainingArgs[++$i] }
+                    }
                 }
             }
             Invoke-ListBotPRs @params
         }
         'merge' {
             $params = @{}
-            for ($i = 0; $i -lt $RemainingArgs.Count; $i++) {
-                switch ($RemainingArgs[$i]) {
-                    '-Repo' { $params.Repo = $RemainingArgs[++$i] }
-                    '-Bots' { $params.Bots = $RemainingArgs[++$i] -split ',' }
-                    '-Strategy' { $params.Strategy = $RemainingArgs[++$i] }
-                    { $_ -in '--dry-run', '-DryRun' } { $params.DryRun = $true }
-                    { $_ -in '--force', '-Force' } { $params.Force = $true }
+            if ($RemainingArgs) {
+                for ($i = 0; $i -lt @($RemainingArgs).Count; $i++) {
+                    switch ($RemainingArgs[$i]) {
+                        '-Repo' { $params.Repo = $RemainingArgs[++$i] }
+                        '-Bots' { $params.Bots = $RemainingArgs[++$i] -split ',' }
+                        '-Strategy' { $params.Strategy = $RemainingArgs[++$i] }
+                        { $_ -in '--dry-run', '-DryRun' } { $params.DryRun = $true }
+                        { $_ -in '--force', '-Force' } { $params.Force = $true }
+                    }
                 }
             }
             Invoke-MergeBotPRs @params
         }
         'config' {
             $params = @{}
-            for ($i = 0; $i -lt $RemainingArgs.Count; $i++) {
-                switch ($RemainingArgs[$i]) {
-                    { $_ -in '--show', '-Show' } { $params.Show = $true }
-                    { $_ -in '--edit', '-Edit' } { $params.Edit = $true }
-                    { $_ -in '--reset', '-Reset' } { $params.Reset = $true }
+            if ($RemainingArgs) {
+                for ($i = 0; $i -lt @($RemainingArgs).Count; $i++) {
+                    switch ($RemainingArgs[$i]) {
+                        { $_ -in '--show', '-Show' } { $params.Show = $true }
+                        { $_ -in '--edit', '-Edit' } { $params.Edit = $true }
+                        { $_ -in '--reset', '-Reset' } { $params.Reset = $true }
+                    }
                 }
             }
             Invoke-ConfigCommand @params

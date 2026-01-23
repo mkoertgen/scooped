@@ -2,7 +2,9 @@
 # Cross-platform compatible
 
 function Test-GitHubCLI {
-    $ghCommand = if ($IsWindows -or $PSVersionTable.PSVersion.Major -le 5) {
+    # PS 5.1 doesn't have $IsWindows
+    $isWin = (-not (Get-Variable -Name IsWindows -ErrorAction SilentlyContinue)) -or $IsWindows
+    $ghCommand = if ($isWin) {
         Get-Command gh.exe -ErrorAction SilentlyContinue
     } else {
         Get-Command gh -ErrorAction SilentlyContinue
@@ -65,7 +67,7 @@ function Get-BotPRs {
         }
     }
 
-    if ($botUsers.Count -eq 0) {
+    if (-not $botUsers -or @($botUsers).Count -eq 0) {
         Write-Warning "No enabled bots found in configuration"
         return @()
     }
@@ -88,9 +90,21 @@ function Get-BotPRs {
         $allPRs = $json | ConvertFrom-Json
 
         # Filter to bot PRs only
+        # Support both exact match and flexible matching for app/* prefixes
         $botPRs = $allPRs | Where-Object {
             $author = $_.author.login
-            $botUsers -contains $author
+            # Exact match
+            if ($botUsers -contains $author) {
+                return $true
+            }
+            # Flexible match: "app/dependabot" matches "dependabot[bot]"
+            foreach ($botUser in $botUsers) {
+                $botName = $botUser -replace '\[bot\]$', '' -replace '-preview$', ''
+                if ($author -match "^app/$botName" -or $author -match "^$botName") {
+                    return $true
+                }
+            }
+            return $false
         }
 
         # Transform to our format
@@ -108,8 +122,10 @@ function Get-BotPRs {
 
             # Determine overall CI status
             $ciStatus = 'UNKNOWN'
-            if ($_.statusCheckRollup) {
-                $ciStatus = $_.statusCheckRollup.state
+            if ($_.PSObject.Properties['statusCheckRollup'] -and $_.statusCheckRollup) {
+                if ($_.statusCheckRollup.PSObject.Properties['state']) {
+                    $ciStatus = $_.statusCheckRollup.state
+                }
             }
 
             [PSCustomObject]@{

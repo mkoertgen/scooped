@@ -38,7 +38,7 @@ function Test-IsBotAuthor {
 
     $config = Get-Config
 
-    if (-not $Bots -or $Bots.Count -eq 0) {
+    if (-not $Bots -or @($Bots).Count -eq 0) {
         # Check all enabled bots
         $Bots = $config.bots.PSObject.Properties.Name | Where-Object {
             $config.bots.$_.enabled

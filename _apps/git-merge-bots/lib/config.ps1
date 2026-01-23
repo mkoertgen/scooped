@@ -3,7 +3,9 @@
 
 function Get-ConfigPath {
     # Use platform-agnostic home directory
-    if ($IsWindows -or $PSVersionTable.PSVersion.Major -le 5) {
+    # PS 5.1 doesn't have $IsWindows, so check for Windows via environment
+    $isWin = (-not (Get-Variable -Name IsWindows -ErrorAction SilentlyContinue)) -or $IsWindows
+    if ($isWin) {
         return Join-Path $env:USERPROFILE '.git-merge-bots.json'
     } else {
         return Join-Path $env:HOME '.git-merge-bots.json'
@@ -14,15 +16,15 @@ function Get-DefaultConfig {
     return @{
         bots = @{
             dependabot = @{
-                users = @('dependabot[bot]', 'dependabot-preview[bot]')
+                users = @('dependabot[bot]', 'dependabot-preview[bot]', 'app/dependabot')
                 enabled = $true
             }
             renovate = @{
-                users = @('renovate[bot]', 'renovatebot')
+                users = @('renovate[bot]', 'renovatebot', 'app/renovate')
                 enabled = $true
             }
             snyk = @{
-                users = @('snyk-bot')
+                users = @('snyk-bot', 'app/snyk-bot')
                 enabled = $true
             }
         }
@@ -97,9 +99,12 @@ function Show-Config {
 
     Write-Host "Bots:" -ForegroundColor Yellow
     foreach ($bot in $config.bots.PSObject.Properties) {
-        $enabled = if ($bot.Value.enabled) { '✓' } else { '✗' }
+        $botValue = $bot.Value
+        $isEnabled = if ($botValue.PSObject.Properties['enabled']) { $botValue.enabled } else { $true }
+        $enabled = if ($isEnabled) { '✓' } else { '✗' }
         Write-Host "  $enabled $($bot.Name)" -ForegroundColor White
-        Write-Host "      Users: $($bot.Value.users -join ', ')" -ForegroundColor Gray
+        $users = if ($botValue.PSObject.Properties['users']) { $botValue.users } else { @() }
+        Write-Host "      Users: $($users -join ', ')" -ForegroundColor Gray
     }
 
     Write-Host ""
@@ -112,8 +117,9 @@ function Show-Config {
     Write-Host "Filters:" -ForegroundColor Yellow
     Write-Host "  Require CI: $($config.filters.requireCI)" -ForegroundColor White
     Write-Host "  Only patch updates: $($config.filters.onlyPatch)" -ForegroundColor White
-    if ($config.filters.excludeRepos.Count -gt 0) {
-        Write-Host "  Excluded repos: $($config.filters.excludeRepos -join ', ')" -ForegroundColor White
+    $excludeRepos = if ($config.filters.PSObject.Properties['excludeRepos']) { $config.filters.excludeRepos } else { @() }
+    if ($excludeRepos -and @($excludeRepos).Count -gt 0) {
+        Write-Host "  Excluded repos: $($excludeRepos -join ', ')" -ForegroundColor White
     } else {
         Write-Host "  Excluded repos: (none)" -ForegroundColor Gray
     }
