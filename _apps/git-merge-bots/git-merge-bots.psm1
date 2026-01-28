@@ -10,7 +10,7 @@ Set-StrictMode -Version Latest
 . "$PSScriptRoot\lib\providers\github.ps1"
 
 function Show-Help {
-    $help = @"
+  $help = @"
 
 git-merge-bots - Automatically merge bot PRs
 
@@ -20,6 +20,7 @@ USAGE:
 COMMANDS:
     list            List bot PRs in current or specified repo
     merge           Merge bot PRs
+    clean           Handle conflicted/stale bot PRs (rebase or close)
     config          Show or edit configuration
     help            Show this help
 
@@ -34,6 +35,13 @@ MERGE OPTIONS:
     -Strategy <strategy>    Merge strategy: rebase, squash, merge (default: rebase)
     -DryRun                 Show what would be merged without doing it
     -Force                  Skip safety checks (conflicts, CI status)
+
+CLEAN OPTIONS:
+    -Repo <owner/repo>      Specific repository (default: current directory)
+    -Bots <bot1,bot2>       Filter by bot names (default: all configured bots)
+    -Action <action>        Action for conflicted PRs: rebase, close (default: rebase)
+    -DryRun                 Show what would be cleaned without doing it
+    -ClosedSince <days>     Close PRs conflicted for N days (default: 7)
 
 CONFIG OPTIONS:
     -Show                   Show current configuration
@@ -56,6 +64,12 @@ EXAMPLES:
     # Merge PRs in specific repo
     git-merge-bots merge -Repo owner/repo
 
+    # Rebase conflicted PRs to resolve conflicts
+    git-merge-bots clean -Action rebase
+
+    # Close stale conflicted PRs (bot will recreate)
+    git-merge-bots clean -Action close
+
     # Show configuration
     git-merge-bots config -Show
 
@@ -69,251 +83,368 @@ CONFIGURATION:
 For more information, see README.md
 
 "@
-    Write-Host $help
+  Write-Host $help
 }
 
 function Invoke-ListBotPRs {
-    param(
-        [string]$Repo,
-        [string[]]$Bots,
-        [ValidateSet('open', 'closed', 'all')]
-        [string]$Status = 'open'
-    )
+  param(
+    [string]$Repo,
+    [string[]]$Bots,
+    [ValidateSet('open', 'closed', 'all')]
+    [string]$Status = 'open'
+  )
 
-    $config = Get-Config
-    if (-not $Bots) {
-        $Bots = $config.bots.PSObject.Properties.Name
-    }
+  $config = Get-Config
+  if (-not $Bots) {
+    $Bots = $config.bots.PSObject.Properties.Name
+  }
 
-    # Detect current repo if not specified
+  # Detect current repo if not specified
+  if (-not $Repo) {
+    $Repo = Get-CurrentRepo
     if (-not $Repo) {
-        $Repo = Get-CurrentRepo
-        if (-not $Repo) {
-            Write-Host "Skipped: Not a GitHub repository" -ForegroundColor DarkGray
-            return
-        }
+      Write-Host "Skipped: Not a GitHub repository" -ForegroundColor DarkGray
+      return
     }
+  }
 
-    Write-Host "Listing bot PRs in $Repo..." -ForegroundColor Cyan
-    Write-Host "Bots: $($Bots -join ', ')" -ForegroundColor Gray
+  Write-Host "Listing bot PRs in $Repo..." -ForegroundColor Cyan
+  Write-Host "Bots: $($Bots -join ', ')" -ForegroundColor Gray
+  Write-Host ""
+
+  $prs = Get-BotPRs -Repo $Repo -Bots $Bots -Status $Status
+
+  if (-not $prs -or @($prs).Count -eq 0) {
+    Write-Host "No bot PRs found." -ForegroundColor Yellow
+    return
+  }
+
+  foreach ($pr in $prs) {
+    $botInfo = Get-BotInfo -Author $pr.author
+    $statusColor = if ($pr.mergeable) { 'Green' } else { 'Red' }
+
+    Write-Host "#$($pr.number) " -NoNewline -ForegroundColor White
+    Write-Host "[$($botInfo.name)]" -NoNewline -ForegroundColor Magenta
+    Write-Host " $($pr.title)" -ForegroundColor White
+    Write-Host "  Author: $($pr.author)" -ForegroundColor Gray
+    Write-Host "  Status: " -NoNewline -ForegroundColor Gray
+    Write-Host $pr.status -ForegroundColor $statusColor
+    if (-not $pr.mergeable) {
+      Write-Host "  ⚠ Not mergeable: $($pr.mergeableReason)" -ForegroundColor Yellow
+    }
     Write-Host ""
+  }
 
-    $prs = Get-BotPRs -Repo $Repo -Bots $Bots -Status $Status
-
-    if (-not $prs -or @($prs).Count -eq 0) {
-        Write-Host "No bot PRs found." -ForegroundColor Yellow
-        return
-    }
-
-    foreach ($pr in $prs) {
-        $botInfo = Get-BotInfo -Author $pr.author
-        $statusColor = if ($pr.mergeable) { 'Green' } else { 'Red' }
-
-        Write-Host "#$($pr.number) " -NoNewline -ForegroundColor White
-        Write-Host "[$($botInfo.name)]" -NoNewline -ForegroundColor Magenta
-        Write-Host " $($pr.title)" -ForegroundColor White
-        Write-Host "  Author: $($pr.author)" -ForegroundColor Gray
-        Write-Host "  Status: " -NoNewline -ForegroundColor Gray
-        Write-Host $pr.status -ForegroundColor $statusColor
-        if (-not $pr.mergeable) {
-            Write-Host "  ⚠ Not mergeable: $($pr.mergeableReason)" -ForegroundColor Yellow
-        }
-        Write-Host ""
-    }
-
-    Write-Host "Total: $(@($prs).Count) bot PRs" -ForegroundColor Cyan
+  Write-Host "Total: $(@($prs).Count) bot PRs" -ForegroundColor Cyan
 }
 
 function Invoke-MergeBotPRs {
-    param(
-        [string]$Repo,
-        [string[]]$Bots,
-        [ValidateSet('rebase', 'squash', 'merge')]
-        [string]$Strategy,
-        [switch]$DryRun,
-        [switch]$Force
-    )
+  param(
+    [string]$Repo,
+    [string[]]$Bots,
+    [ValidateSet('rebase', 'squash', 'merge')]
+    [string]$Strategy,
+    [switch]$DryRun,
+    [switch]$Force
+  )
 
-    $config = Get-Config
+  $config = Get-Config
 
-    if (-not $Bots) {
-        $Bots = $config.bots.PSObject.Properties.Name
-    }
+  if (-not $Bots) {
+    $Bots = $config.bots.PSObject.Properties.Name
+  }
 
-    if (-not $Strategy) {
-        $Strategy = $config.mergeStrategy
-    }
+  if (-not $Strategy) {
+    $Strategy = $config.mergeStrategy
+  }
 
-    # Detect current repo if not specified
+  # Detect current repo if not specified
+  if (-not $Repo) {
+    $Repo = Get-CurrentRepo
     if (-not $Repo) {
-        $Repo = Get-CurrentRepo
-        if (-not $Repo) {
-            Write-Host "Skipped: Not a GitHub repository" -ForegroundColor DarkGray
-            return
-        }
+      Write-Host "Skipped: Not a GitHub repository" -ForegroundColor DarkGray
+      return
+    }
+  }
+
+  Write-Host "Merging bot PRs in $Repo..." -ForegroundColor Cyan
+  Write-Host "Bots: $($Bots -join ', ')" -ForegroundColor Gray
+  Write-Host "Strategy: $Strategy" -ForegroundColor Gray
+  if ($DryRun) {
+    Write-Host "Mode: DRY RUN (no actual merges)" -ForegroundColor Yellow
+  }
+  Write-Host ""
+
+  $prs = Get-BotPRs -Repo $Repo -Bots $Bots -Status 'open'
+
+  if (-not $prs -or @($prs).Count -eq 0) {
+    Write-Host "No bot PRs to merge." -ForegroundColor Yellow
+    return
+  }
+
+  $merged = 0
+  $skipped = 0
+  $failed = 0
+
+  foreach ($pr in $prs) {
+    $botInfo = Get-BotInfo -Author $pr.author
+    Write-Host "Processing #$($pr.number) [$($botInfo.name)] $($pr.title)" -ForegroundColor White
+
+    # Safety checks (skip if -Force)
+    if (-not $Force) {
+      if (-not $pr.mergeable) {
+        Write-Host "  ⚠ Skipped: $($pr.mergeableReason)" -ForegroundColor Yellow
+        $skipped++
+        continue
+      }
+
+      # Only block on failed CI checks, not UNKNOWN (repos without CI or pending checks)
+      if ($pr.status -in @('FAILURE', 'ERROR', 'PENDING')) {
+        Write-Host "  ⚠ Skipped: CI checks not passed ($($pr.status))" -ForegroundColor Yellow
+        $skipped++
+        continue
+      }
     }
 
-    Write-Host "Merging bot PRs in $Repo..." -ForegroundColor Cyan
-    Write-Host "Bots: $($Bots -join ', ')" -ForegroundColor Gray
-    Write-Host "Strategy: $Strategy" -ForegroundColor Gray
     if ($DryRun) {
-        Write-Host "Mode: DRY RUN (no actual merges)" -ForegroundColor Yellow
+      Write-Host "  ✓ Would merge with strategy: $Strategy" -ForegroundColor Green
+      $merged++
+    } else {
+      try {
+        Merge-PR -Repo $Repo -Number $pr.number -Strategy $Strategy -DeleteBranch:$config.deleteBranch
+        Write-Host "  ✓ Merged successfully" -ForegroundColor Green
+        $merged++
+      } catch {
+        Write-Host "  ✗ Failed: $_" -ForegroundColor Red
+        $failed++
+      }
     }
     Write-Host ""
+  }
 
-    $prs = Get-BotPRs -Repo $Repo -Bots $Bots -Status 'open'
+  # Summary
+  Write-Host "─────────────────────────────────" -ForegroundColor Gray
+  Write-Host "Summary:" -ForegroundColor Cyan
+  Write-Host "  Merged: $merged" -ForegroundColor Green
+  if ($skipped -gt 0) {
+    Write-Host "  Skipped: $skipped" -ForegroundColor Yellow
+  }
+  if ($failed -gt 0) {
+    Write-Host "  Failed: $failed" -ForegroundColor Red
+  }
+}
 
-    if (-not $prs -or @($prs).Count -eq 0) {
-        Write-Host "No bot PRs to merge." -ForegroundColor Yellow
-        return
+function Invoke-CleanBotPRs {
+  param(
+    [string]$Repo,
+    [string[]]$Bots,
+    [ValidateSet('rebase', 'close')]
+    [string]$Action = 'rebase',
+    [switch]$DryRun,
+    [int]$ClosedSince = 7
+  )
+
+  $config = Get-Config
+
+  if (-not $Bots) {
+    $Bots = $config.bots.PSObject.Properties.Name
+  }
+
+  # Detect current repo if not specified
+  if (-not $Repo) {
+    $Repo = Get-CurrentRepo
+    if (-not $Repo) {
+      Write-Host "Skipped: Not a GitHub repository" -ForegroundColor DarkGray
+      return
     }
+  }
 
-    $merged = 0
-    $skipped = 0
-    $failed = 0
+  Write-Host "Cleaning bot PRs in $Repo..." -ForegroundColor Cyan
+  Write-Host "Bots: $($Bots -join ', ')" -ForegroundColor Gray
+  Write-Host "Action: $Action" -ForegroundColor Gray
+  if ($DryRun) {
+    Write-Host "Mode: DRY RUN (no actual changes)" -ForegroundColor Yellow
+  }
+  Write-Host ""
 
-    foreach ($pr in $prs) {
-        $botInfo = Get-BotInfo -Author $pr.author
-        Write-Host "Processing #$($pr.number) [$($botInfo.name)] $($pr.title)" -ForegroundColor White
+  $prs = Get-BotPRs -Repo $Repo -Bots $Bots -Status 'open'
 
-        # Safety checks (skip if -Force)
-        if (-not $Force) {
-            if (-not $pr.mergeable) {
-                Write-Host "  ⚠ Skipped: $($pr.mergeableReason)" -ForegroundColor Yellow
-                $skipped++
-                continue
-            }
+  if (-not $prs -or @($prs).Count -eq 0) {
+    Write-Host "No bot PRs found." -ForegroundColor Yellow
+    return
+  }
 
-            if ($pr.status -ne 'SUCCESS') {
-                Write-Host "  ⚠ Skipped: CI checks not passed ($($pr.status))" -ForegroundColor Yellow
-                $skipped++
-                continue
-            }
+  # Filter to only conflicted PRs
+  $conflictedPRs = $prs | Where-Object { -not $_.mergeable -and $_.mergeableReason -eq 'Conflicts with base branch' }
+
+  if (-not $conflictedPRs -or @($conflictedPRs).Count -eq 0) {
+    Write-Host "No conflicted bot PRs found." -ForegroundColor Green
+    return
+  }
+
+  $processed = 0
+  $skipped = 0
+  $failed = 0
+
+  foreach ($pr in $conflictedPRs) {
+    $botInfo = Get-BotInfo -Author $pr.author
+    Write-Host "Processing #$($pr.number) [$($botInfo.name)] $($pr.title)" -ForegroundColor White
+    Write-Host "  Status: Conflicts with base branch" -ForegroundColor Yellow
+
+    if ($DryRun) {
+      switch ($Action) {
+        'rebase' {
+          Write-Host "  → Would rebase/update branch" -ForegroundColor Cyan
         }
-
-        if ($DryRun) {
-            Write-Host "  ✓ Would merge with strategy: $Strategy" -ForegroundColor Green
-            $merged++
-        } else {
-            try {
-                Merge-PR -Repo $Repo -Number $pr.number -Strategy $Strategy -DeleteBranch:$config.deleteBranch
-                Write-Host "  ✓ Merged successfully" -ForegroundColor Green
-                $merged++
-            } catch {
-                Write-Host "  ✗ Failed: $_" -ForegroundColor Red
-                $failed++
-            }
+        'close' {
+          Write-Host "  → Would close (bot will recreate)" -ForegroundColor Cyan
         }
-        Write-Host ""
+      }
+      $processed++
+    } else {
+      try {
+        switch ($Action) {
+          'rebase' {
+            Update-PRBranch -Repo $Repo -Number $pr.number
+            Write-Host "  ✓ Branch updated (rebased on base)" -ForegroundColor Green
+          }
+          'close' {
+            Close-PR -Repo $Repo -Number $pr.number -Comment "Closing due to conflicts. Bot will recreate with updated dependencies."
+            Write-Host "  ✓ Closed (bot will recreate)" -ForegroundColor Green
+          }
+        }
+        $processed++
+      } catch {
+        Write-Host "  ✗ Failed: $_" -ForegroundColor Red
+        $failed++
+      }
     }
+    Write-Host ""
+  }
 
-    # Summary
-    Write-Host "─────────────────────────────────" -ForegroundColor Gray
-    Write-Host "Summary:" -ForegroundColor Cyan
-    Write-Host "  Merged: $merged" -ForegroundColor Green
-    if ($skipped -gt 0) {
-        Write-Host "  Skipped: $skipped" -ForegroundColor Yellow
-    }
-    if ($failed -gt 0) {
-        Write-Host "  Failed: $failed" -ForegroundColor Red
-    }
+  # Summary
+  Write-Host "─────────────────────────────────" -ForegroundColor Gray
+  Write-Host "Summary:" -ForegroundColor Cyan
+  Write-Host "  Found conflicted: $(@($conflictedPRs).Count)" -ForegroundColor Yellow
+  Write-Host "  Processed: $processed" -ForegroundColor Green
+  if ($skipped -gt 0) {
+    Write-Host "  Skipped: $skipped" -ForegroundColor Yellow
+  }
+  if ($failed -gt 0) {
+    Write-Host "  Failed: $failed" -ForegroundColor Red
+  }
 }
 
 function Invoke-ConfigCommand {
-    param(
-        [switch]$Show,
-        [switch]$Edit,
-        [switch]$Reset
-    )
+  param(
+    [switch]$Show,
+    [switch]$Edit,
+    [switch]$Reset
+  )
 
-    if ($Reset) {
-        $confirm = Read-Host "Reset configuration to defaults? (y/N)"
-        if ($confirm -eq 'y') {
-            Reset-Config
-            Write-Host "Configuration reset to defaults." -ForegroundColor Green
-        }
-        return
+  if ($Reset) {
+    $confirm = Read-Host "Reset configuration to defaults? (y/N)"
+    if ($confirm -eq 'y') {
+      Reset-Config
+      Write-Host "Configuration reset to defaults." -ForegroundColor Green
     }
+    return
+  }
 
-    if ($Edit) {
-        $configPath = Get-ConfigPath
-        if (Get-Command code -ErrorAction SilentlyContinue) {
-            & code $configPath
-        } elseif (Get-Command notepad -ErrorAction SilentlyContinue) {
-            & notepad $configPath
-        } else {
-            Write-Host "Config file: $configPath"
-            Write-Host "Please open it manually in your editor."
-        }
-        return
+  if ($Edit) {
+    $configPath = Get-ConfigPath
+    if (Get-Command code -ErrorAction SilentlyContinue) {
+      & code $configPath
+    } elseif (Get-Command notepad -ErrorAction SilentlyContinue) {
+      & notepad $configPath
+    } else {
+      Write-Host "Config file: $configPath"
+      Write-Host "Please open it manually in your editor."
     }
+    return
+  }
 
-    # Default: Show config
-    Show-Config
+  # Default: Show config
+  Show-Config
 }
 
 function Invoke-GitMergeBots {
-    param(
-        [Parameter(Position = 0)]
-        [string]$Command,
+  param(
+    [Parameter(Position = 0)]
+    [string]$Command,
 
-        [Parameter(ValueFromRemainingArguments)]
-        [string[]]$RemainingArgs
-    )
+    [Parameter(ValueFromRemainingArguments)]
+    [string[]]$RemainingArgs
+  )
 
-    switch ($Command) {
-        'list' {
-            $params = @{}
-            if ($RemainingArgs) {
-                for ($i = 0; $i -lt @($RemainingArgs).Count; $i++) {
-                    switch ($RemainingArgs[$i]) {
-                        '-Repo' { $params.Repo = $RemainingArgs[++$i] }
-                        '-Bots' { $params.Bots = $RemainingArgs[++$i] -split ',' }
-                        '-Status' { $params.Status = $RemainingArgs[++$i] }
-                    }
-                }
-            }
-            Invoke-ListBotPRs @params
+  switch ($Command) {
+    'list' {
+      $params = @{}
+      if ($RemainingArgs) {
+        for ($i = 0; $i -lt @($RemainingArgs).Count; $i++) {
+          switch ($RemainingArgs[$i]) {
+            '-Repo' { $params.Repo = $RemainingArgs[++$i] }
+            '-Bots' { $params.Bots = $RemainingArgs[++$i] -split ',' }
+            '-Status' { $params.Status = $RemainingArgs[++$i] }
+          }
         }
-        'merge' {
-            $params = @{}
-            if ($RemainingArgs) {
-                for ($i = 0; $i -lt @($RemainingArgs).Count; $i++) {
-                    switch ($RemainingArgs[$i]) {
-                        '-Repo' { $params.Repo = $RemainingArgs[++$i] }
-                        '-Bots' { $params.Bots = $RemainingArgs[++$i] -split ',' }
-                        '-Strategy' { $params.Strategy = $RemainingArgs[++$i] }
-                        { $_ -in '--dry-run', '-DryRun' } { $params.DryRun = $true }
-                        { $_ -in '--force', '-Force' } { $params.Force = $true }
-                    }
-                }
-            }
-            Invoke-MergeBotPRs @params
-        }
-        'config' {
-            $params = @{}
-            if ($RemainingArgs) {
-                for ($i = 0; $i -lt @($RemainingArgs).Count; $i++) {
-                    switch ($RemainingArgs[$i]) {
-                        { $_ -in '--show', '-Show' } { $params.Show = $true }
-                        { $_ -in '--edit', '-Edit' } { $params.Edit = $true }
-                        { $_ -in '--reset', '-Reset' } { $params.Reset = $true }
-                    }
-                }
-            }
-            Invoke-ConfigCommand @params
-        }
-        'help' {
-            Show-Help
-        }
-        default {
-            if ($Command) {
-                Write-Host "Unknown command: $Command" -ForegroundColor Red
-                Write-Host ""
-            }
-            Show-Help
-        }
+      }
+      Invoke-ListBotPRs @params
     }
+    'merge' {
+      $params = @{}
+      if ($RemainingArgs) {
+        for ($i = 0; $i -lt @($RemainingArgs).Count; $i++) {
+          switch ($RemainingArgs[$i]) {
+            '-Repo' { $params.Repo = $RemainingArgs[++$i] }
+            '-Bots' { $params.Bots = $RemainingArgs[++$i] -split ',' }
+            '-Strategy' { $params.Strategy = $RemainingArgs[++$i] }
+            { $_ -in '--dry-run', '-DryRun' } { $params.DryRun = $true }
+            { $_ -in '--force', '-Force' } { $params.Force = $true }
+          }
+        }
+      }
+      Invoke-MergeBotPRs @params
+    }
+    'clean' {
+      $params = @{}
+      if ($RemainingArgs) {
+        for ($i = 0; $i -lt @($RemainingArgs).Count; $i++) {
+          switch ($RemainingArgs[$i]) {
+            '-Repo' { $params.Repo = $RemainingArgs[++$i] }
+            '-Bots' { $params.Bots = $RemainingArgs[++$i] -split ',' }
+            '-Action' { $params.Action = $RemainingArgs[++$i] }
+            { $_ -in '--dry-run', '-DryRun' } { $params.DryRun = $true }
+            '-ClosedSince' { $params.ClosedSince = [int]$RemainingArgs[++$i] }
+          }
+        }
+      }
+      Invoke-CleanBotPRs @params
+    }
+    'config' {
+      $params = @{}
+      if ($RemainingArgs) {
+        for ($i = 0; $i -lt @($RemainingArgs).Count; $i++) {
+          switch ($RemainingArgs[$i]) {
+            { $_ -in '--show', '-Show' } { $params.Show = $true }
+            { $_ -in '--edit', '-Edit' } { $params.Edit = $true }
+            { $_ -in '--reset', '-Reset' } { $params.Reset = $true }
+          }
+        }
+      }
+      Invoke-ConfigCommand @params
+    }
+    'help' {
+      Show-Help
+    }
+    default {
+      if ($Command) {
+        Write-Host "Unknown command: $Command" -ForegroundColor Red
+        Write-Host ""
+      }
+      Show-Help
+    }
+  }
 }
 
 Export-ModuleMember -Function Invoke-GitMergeBots

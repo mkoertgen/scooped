@@ -213,8 +213,32 @@ git-ws will automatically call `git-merge-bots` for each repository in the works
 **Automatic checks (skip with `--force`):**
 
 - ✅ PR is mergeable (no conflicts)
-- ✅ CI checks have passed
+- ✅ CI checks have passed or are not configured
 - ✅ PR is from configured bot user
+
+**CI Check Behavior:**
+
+The tool uses intelligent CI status detection:
+
+- **SUCCESS** → Merge allowed ✅
+- **UNKNOWN** (no CI configured) → Merge allowed ✅
+- **PENDING** (running) → Skip, wait for completion ⏸️
+- **FAILURE** → Skip until fixed ❌
+- **ERROR** → Skip until fixed ❌
+
+This allows merging in repos without CI while still respecting CI results when present.
+
+**Conflict Resolution:**
+
+Use the `clean` command for conflicted PRs:
+
+```powershell
+# Try rebasing on latest base branch
+git-merge-bots clean -Action rebase
+
+# Close conflicted PRs (bot will recreate with newer versions)
+git-merge-bots clean -Action close
+```
 
 **Best practices:**
 
@@ -222,6 +246,40 @@ git-ws will automatically call `git-merge-bots` for each repository in the works
 - Review PR changes before merging
 - Use on non-critical repositories
 - Keep CI checks enabled
+
+## Handling Conflicted PRs
+
+### `clean` - Handle conflicted/stale bot PRs
+
+```powershell
+git-merge-bots clean [options]
+
+Options:
+  -Repo <owner/repo>    Specific repository (default: current dir)
+  -Bots <bot1,bot2>     Filter by bot names (default: all)
+  -Action <action>      Action for conflicted PRs: rebase, close (default: rebase)
+  -DryRun               Show what would be cleaned without doing it
+```
+
+**Examples:**
+
+```powershell
+# Preview what would be cleaned
+git-merge-bots clean --dry-run
+
+# Try rebasing conflicted PRs
+git-merge-bots clean -Action rebase
+
+# Close conflicted PRs (bot recreates with latest)
+git-merge-bots clean -Action close
+```
+
+**When to use:**
+
+- **Rebase**: For fresh conflicts that might auto-resolve
+- **Close**: For cascading dependency conflicts or stale PRs
+  - Bot will recreate PR with updated dependency versions
+  - Often resolves related conflicts automatically
 
 ## Use Cases
 
