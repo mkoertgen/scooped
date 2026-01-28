@@ -1,8 +1,8 @@
 {
-  "version": "0.1.1",
-  "url": "https://github.com/mkoertgen/scooped/archive/refs/tags/git-merge-bots/0.1.1.zip",
-  "hash": "85197f178891daf4dbcfd3d723e0b59cf9bc63cd3036257b4f1e04e77428614b",
-  "extract_dir": "scooped-git-merge-bots-0.1.1/_apps/git-merge-bots",
+  "version": "0.2.0",
+  "url": "https://github.com/mkoertgen/scooped/archive/refs/tags/git-merge-bots/0.2.0.zip",
+  "hash": "2fa6ba20b3542ea7d4fd0a59e98ca5eb66d6d79556aeddff6f20d2d8b6382737",
+  "extract_dir": "scooped-git-merge-bots-0.2.0/_apps/git-merge-bots",
   "bin": [
     [
       "git-merge-bots.ps1",
