@@ -87,6 +87,7 @@ Commands:
   bm <context> remove <name>   Remove a bookmark
   workspace <name> <path>      Set VS Code workspace for a context
   remove-workspace <name>      Remove workspace from a context
+  mkws <name> <dir1> [dir2...] Create .code-workspace from folders (optionally create context)
   ps                           Show running contexts
   close <context>              Close browser and VS Code for a context
   export                       Export config as JSON (pipe to file)
@@ -109,14 +110,18 @@ Examples:
   # Browser contexts
   browser-contexts add acme -b chrome
   browser-contexts add contoso -b chrome -u "https://portal.azure.com"
-  
+
   # Browser + workspace
   browser-contexts add project -b chrome -w "C:\Projects\project.code-workspace"
-  
+
   # Workspace-only (no browser) - for backend/infra projects
   browser-contexts add infra -w "C:\Projects\infrastructure.code-workspace"
   browser-contexts add docs -w "wsl://Ubuntu/home/user/docs.code-workspace"
-  
+
+  # Create workspace from multiple folders
+  browser-contexts mkws infra ./terraform ./ansible ./scripts
+  browser-contexts mkws api ./src ./tests ./docs -CreateContext
+
   browser-contexts workspace acme "wsl://Ubuntu/home/user/acme.code-workspace"
   browser-contexts urls acme "https://dev.azure.com/acme" "https://teams.microsoft.com"
   browser-contexts bm acme add azure https://portal.azure.com
@@ -252,6 +257,15 @@ function Invoke-BrowserContexts {
         return
       }
       Remove-ContextWorkspace -ContextName $Arguments[0]
+    }
+    { $_ -in "mkws", "create-workspace", "new-workspace" } {
+      if (-not $Arguments -or $Arguments.Count -lt 2) {
+        Write-Error "Usage: browser-contexts mkws <name> <dir1> [dir2...] [-CreateContext]"
+        return
+      }
+      $createCtx = $Arguments -contains "-CreateContext" -or $Arguments -contains "-c"
+      $folders = $Arguments[1..($Arguments.Count - 1)] | Where-Object { $_ -notmatch "^-" }
+      New-WorkspaceFile -Name $Arguments[0] -Folders $folders -CreateContext:$createCtx
     }
     "open" {
       if (-not $Arguments -or $Arguments.Count -eq 0) {

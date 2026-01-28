@@ -65,15 +65,21 @@ browser-contexts open acme https://teams.microsoft.com
 Perfect for backend, infrastructure, or documentation projects that don't need a browser:
 
 ```powershell
-# Backend/API projects
+# Quick: Create workspace from multiple folders
+cd C:\Projects\myapp
+browser-contexts mkws myapp ./src ./tests ./docs -CreateContext
+# Creates: myapp.code-workspace + workspace-only context
+browser-contexts myapp            # Launch it!
+
+# Manual: Backend/API projects
 browser-contexts add api-service -w "C:\Projects\api-service.code-workspace"
 
 # Infrastructure/DevOps
-browser-contexts add infra -w "C:\Projects\terraform.code-workspace"
+browser-contexts mkws infra ./terraform ./ansible ./k8s -CreateContext
 browser-contexts add k8s -w "wsl://Ubuntu/home/user/kubernetes.code-workspace"
 
 # Documentation projects
-browser-contexts add docs -w "C:\Docs\technical-docs.code-workspace"
+browser-contexts mkws docs ./docs ./wiki ./readme -CreateContext
 
 # Quick launch
 browser-contexts api-service      # Opens just VS Code workspace
@@ -172,28 +178,29 @@ Use `browser-contexts config` to see which browsers are detected on your system.
 
 ## Commands
 
-| Command                                     | Description                            |
-| ------------------------------------------- | -------------------------------------- |
-| `list`                                      | Show all configured contexts           |
-| `<context>`                                 | Quick access - open a context          |
-| `<context> <bookmark>`                      | Open context with specific bookmark(s) |
-| `open <context> [urls]`                     | Open context with optional extra URLs  |
-| `add <name> [-b browser] [-u urls] [-w ws]` | Create a new context                   |
-| `remove <name> [-DeleteData]`               | Remove a context                       |
-| `urls <name> <url1> [url2...]`              | Set default URLs for a context         |
-| `add-url <name> <url1> [url2...]`           | Add URL(s) to a context (idempotent)   |
-| `remove-url <name> <url1> [url2...]`        | Remove URL(s) from a context           |
-| `bm <context>`                              | List bookmarks for a context           |
-| `bm <context> add <name> <url>`             | Add a named bookmark                   |
-| `bm <context> remove <name>`                | Remove a bookmark                      |
-| `workspace <name> <path>`                   | Set VS Code workspace for a context    |
-| `remove-workspace <name>`                   | Remove workspace from a context        |
-| `ps`                                        | Show running browser contexts          |
-| `close <context>`                           | Close browser and VS Code for context  |
-| `export`                                    | Export config to stdout (pipe to file) |
-| `import`                                    | Import config from stdin               |
-| `config`                                    | Show config and available browsers     |
-| `help`                                      | Show help                              |
+| Command                                         | Description                                        |
+| ----------------------------------------------- | -------------------------------------------------- |
+| `list`                                          | Show all configured contexts                       |
+| `<context>`                                     | Quick access - open a context                      |
+| `<context> <bookmark>`                          | Open context with specific bookmark(s)             |
+| `open <context> [urls]`                         | Open context with optional extra URLs              |
+| `add <name> [-b browser] [-u urls] [-w ws]`     | Create a new context                               |
+| `remove <name> [-DeleteData]`                   | Remove a context                                   |
+| `urls <name> <url1> [url2...]`                  | Set default URLs for a context                     |
+| `add-url <name> <url1> [url2...]`               | Add URL(s) to a context (idempotent)               |
+| `remove-url <name> <url1> [url2...]`            | Remove URL(s) from a context                       |
+| `bm <context>`                                  | List bookmarks for a context                       |
+| `bm <context> add <name> <url>`                 | Add a named bookmark                               |
+| `bm <context> remove <name>`                    | Remove a bookmark                                  |
+| `workspace <name> <path>`                       | Set VS Code workspace for a context                |
+| `remove-workspace <name>`                       | Remove workspace from a context                    |
+| `mkws <name> <dir1> [dir2...] [-CreateContext]` | Create .code-workspace from folders (quick setup!) |
+| `ps`                                            | Show running browser contexts                      |
+| `close <context>`                               | Close browser and VS Code for context              |
+| `export`                                        | Export config to stdout (pipe to file)             |
+| `import`                                        | Import config from stdin                           |
+| `config`                                        | Show config and available browsers                 |
+| `help`                                          | Show help                                          |
 
 ## Tips
 

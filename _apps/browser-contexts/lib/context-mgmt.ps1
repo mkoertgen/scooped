@@ -273,3 +273,69 @@ function Remove-ContextUrl {
   Write-Host "Removed URL from '$ContextName':" -ForegroundColor Yellow
   Write-Host "  - $Url" -ForegroundColor DarkGray
 }
+
+function New-WorkspaceFile {
+  param (
+    [Parameter(Mandatory)][string]$Name,
+    [Parameter(Mandatory)][string[]]$Folders,
+    [string]$OutputPath,
+    [switch]$CreateContext
+  )
+
+  # Resolve and validate folders
+  $workspaceFolders = @()
+  foreach ($folder in $Folders) {
+    $resolvedPath = Resolve-Path $folder -ErrorAction SilentlyContinue
+    if (-not $resolvedPath) {
+      Write-Warning "Folder not found: $folder (skipping)"
+      continue
+    }
+
+    $workspaceFolders += @{
+      path = $resolvedPath.Path
+    }
+  }
+
+  if ($workspaceFolders.Count -eq 0) {
+    Write-Error "No valid folders found."
+    return
+  }
+
+  # Create workspace JSON
+  $workspace = @{
+    folders = $workspaceFolders
+    settings = @{}
+  }
+
+  # Determine output path
+  if (-not $OutputPath) {
+    $OutputPath = Join-Path (Get-Location) "$Name.code-workspace"
+  }
+
+  # Ensure .code-workspace extension
+  if (-not $OutputPath.EndsWith('.code-workspace')) {
+    $OutputPath += '.code-workspace'
+  }
+
+  # Write workspace file
+  $workspace | ConvertTo-Json -Depth 10 | Set-Content -Path $OutputPath -Encoding UTF8
+  Write-Host "Created workspace file: $OutputPath" -ForegroundColor Green
+  Write-Host "  Folders: $($workspaceFolders.Count)" -ForegroundColor DarkGray
+  foreach ($f in $workspaceFolders) {
+    Write-Host "    - $($f.path)" -ForegroundColor DarkGray
+  }
+
+  # Optionally create context
+  if ($CreateContext) {
+    $config = Get-Config
+    if (Test-ContextExists $config $Name) {
+      Write-Host "Context '$Name' already exists, updating workspace..." -ForegroundColor Yellow
+      Set-ContextWorkspace -ContextName $Name -WorkspacePath $OutputPath
+    } else {
+      Write-Host "Creating workspace-only context '$Name'..." -ForegroundColor Cyan
+      Add-Context -ContextName $Name -Workspace $OutputPath
+    }
+  }
+
+  return $OutputPath
+}
