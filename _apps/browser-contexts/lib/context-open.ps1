@@ -123,7 +123,7 @@ function Open-VSCodeWorkspace {
         $wslPath = $Matches[2]
         Write-Host "Opening VS Code WSL workspace: $distro$wslPath" -ForegroundColor Magenta
         $fileUri = "vscode-remote://wsl+$distro$wslPath"
-        Start-Process $vscodePath -ArgumentList "--file-uri", "`"$fileUri`"" -NoNewWindow
+        Start-Process $vscodePath -ArgumentList "--file-uri", "`"$fileUri`"" -WindowStyle Hidden
         return
     }
 
@@ -133,14 +133,14 @@ function Open-VSCodeWorkspace {
         $wslPath = "/" + ($Matches[3] -replace '\\', '/')
         Write-Host "Opening VS Code WSL workspace: $distro$wslPath" -ForegroundColor Magenta
         $fileUri = "vscode-remote://wsl+$distro$wslPath"
-        Start-Process $vscodePath -ArgumentList "--file-uri", "`"$fileUri`"" -NoNewWindow
+        Start-Process $vscodePath -ArgumentList "--file-uri", "`"$fileUri`"" -WindowStyle Hidden
         return
     }
 
     # Regular Windows path
     if (Test-Path $expandedPath) {
         Write-Host "Opening VS Code workspace: $expandedPath" -ForegroundColor Magenta
-        Start-Process $vscodePath -ArgumentList "`"$expandedPath`"" -NoNewWindow
+        Start-Process $vscodePath -ArgumentList "`"$expandedPath`"" -WindowStyle Hidden
     } else {
         Write-Warning "Workspace not found: $expandedPath"
     }
