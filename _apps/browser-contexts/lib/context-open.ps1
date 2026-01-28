@@ -15,9 +15,22 @@ function Open-Context {
     }
 
     $ctx = $config.contexts.$ContextName
-    $browser = if ($ctx.browser) { $ctx.browser } else { "chrome" }
-    $browserPath = Get-BrowserPath $browser
+    $browser = $ctx.browser
+    $hasUrls = ($ctx.urls -and $ctx.urls.Count -gt 0) -or ($ExtraUrls -and $ExtraUrls.Count -gt 0)
 
+    # Workspace-only context (no browser)
+    if (-not $browser -and $ctx.workspace) {
+        Write-Host "Opening workspace-only context: $ContextName" -ForegroundColor Green
+        Open-VSCodeWorkspace -WorkspacePath $ctx.workspace
+        return
+    }
+
+    # Browser context
+    if (-not $browser) {
+        $browser = "chrome"  # Default fallback
+    }
+
+    $browserPath = Get-BrowserPath $browser
     if (-not $browserPath) {
         Write-Error "Browser '$browser' not found."
         return
@@ -25,7 +38,7 @@ function Open-Context {
 
     $dataDir = Get-ContextDataDir $ContextName
 
-    # Ensure data directory exists
+    # Ensure data directory exists for browser contexts
     if (-not (Test-Path $dataDir)) {
         New-Item -ItemType Directory -Path $dataDir -Force | Out-Null
         Write-Host "Created new context data directory: $dataDir" -ForegroundColor DarkGray

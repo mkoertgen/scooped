@@ -2,30 +2,36 @@
 
 Isolated browser sessions with separate SSO/cookie/storage state. Each context gets its own `--user-data-dir`, providing complete isolation like Playwright browser contexts.
 
+**Supports three context types:**
+
+- **Browser + Workspace**: Full web dev (SSO isolation + code)
+- **Browser only**: Web-only (testing, multi-tenant SSO)
+- **Workspace only**: Backend/infra projects (no browser)
+
 ## Commands
 
-| Command                             | Description                                 |
-| ----------------------------------- | ------------------------------------------- |
-| `list`                              | Show all configured contexts                |
-| `<context>`                         | Quick access - open a context               |
-| `<context> <bookmark>`              | Open context with specific bookmark(s)      |
-| `show <context>`                    | Show details for a specific context         |
-| `open <context> [urls...]`          | Open context with optional extra URLs       |
-| `add <name> [-b browser] [-u urls]` | Create a new context                        |
-| `remove <name> [-DeleteData]`       | Remove a context                            |
-| `urls <name> <url1> [url2...]`      | Set URLs for a context (replaces all)       |
-| `add-url <name> <url>`              | Add URL to a context (idempotent)           |
-| `remove-url <name> <url>`           | Remove URL from a context                   |
-| `bm <context>`                      | List bookmarks for a context                |
-| `bm <context> add <name> <url>`     | Add a named bookmark                        |
-| `bm <context> remove <name>`        | Remove a bookmark                           |
-| `workspace <name> <path>`           | Set VS Code workspace (.code-workspace)     |
-| `remove-workspace <name>`           | Remove workspace from a context             |
-| `ps`                                | Show running contexts with PID and uptime   |
-| `close <context>`                   | Close browser and VS Code for context       |
-| `export`                            | Export config as JSON (for backup/dotfiles) |
-| `import <file>`                     | Import config from JSON file                |
-| `config`                            | Show configuration and available browsers   |
+| Command                                  | Description                                 |
+| ---------------------------------------- | ------------------------------------------- |
+| `list`                                   | Show all configured contexts                |
+| `<context>`                              | Quick access - open a context               |
+| `<context> <bookmark>`                   | Open context with specific bookmark(s)      |
+| `show <context>`                         | Show details for a specific context         |
+| `open <context> [urls...]`               | Open context with optional extra URLs       |
+| `add <name> [-b browser] [-w workspace]` | Create a new context (browser or workspace) |
+| `remove <name> [-DeleteData]`            | Remove a context                            |
+| `urls <name> <url1> [url2...]`           | Set URLs for a context (replaces all)       |
+| `add-url <name> <url>`                   | Add URL to a context (idempotent)           |
+| `remove-url <name> <url>`                | Remove URL from a context                   |
+| `bm <context>`                           | List bookmarks for a context                |
+| `bm <context> add <name> <url>`          | Add a named bookmark                        |
+| `bm <context> remove <name>`             | Remove a bookmark                           |
+| `workspace <name> <path>`                | Set VS Code workspace (.code-workspace)     |
+| `remove-workspace <name>`                | Remove workspace from a context             |
+| `ps`                                     | Show running contexts with PID and uptime   |
+| `close <context>`                        | Close browser and VS Code for context       |
+| `export`                                 | Export config as JSON (for backup/dotfiles) |
+| `import <file>`                          | Import config from JSON file                |
+| `config`                                 | Show configuration and available browsers   |
 
 ## Bookmarks
 
@@ -50,14 +56,31 @@ bc workspace contoso "wsl://Ubuntu/home/user/contoso.code-workspace"
 
 WSL workspaces use the `wsl://Distro/path` shorthand and open with Remote - WSL.
 
-## Use Case
+## Use Cases
 
-Multi-tenant SSO isolation - work with multiple Azure tenants, AWS accounts, or any conflicting SSO sessions simultaneously:
+### Multi-tenant SSO Isolation
+
+Work with multiple Azure tenants, AWS accounts, or any conflicting SSO sessions simultaneously:
 
 ```powershell
 bc secunet      # Opens Chrome with secunet Azure tenant + workspace
 bc barmenia     # Opens another Chrome with barmenia tenant
 bc colenio      # Opens Chrome with colenio session
+```
+
+### Workspace-Only Projects
+
+Backend, infrastructure, or documentation projects without browser needs:
+
+```powershell
+# Create workspace-only contexts
+bc add api-service -w "C:\Projects\api-service.code-workspace"
+bc add infra -w "C:\Projects\terraform.code-workspace"
+bc add docs -w "wsl://Ubuntu/home/user/docs.code-workspace"
+
+# Quick launch (just VS Code)
+bc api-service
+bc infra
 ```
 
 ## Configuration

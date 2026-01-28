@@ -3,7 +3,7 @@
 function Add-Context {
   param (
     [Parameter(Mandatory)][string]$ContextName,
-    [string]$Browser = "chrome",
+    [string]$Browser,
     [string[]]$Urls,
     [string]$Workspace
   )
@@ -15,8 +15,16 @@ function Add-Context {
     $config | Add-Member -NotePropertyName "contexts" -NotePropertyValue ([PSCustomObject]@{}) -Force
   }
 
-  $contextObj = [PSCustomObject]@{
-    browser = $Browser.ToLower()
+  # Validate: must have either browser+urls OR workspace
+  if (-not $Browser -and -not $Workspace) {
+    Write-Error "Context must have at least a browser or a workspace. Use -b for browser or -w for workspace."
+    return
+  }
+
+  $contextObj = [PSCustomObject]@{}
+
+  if ($Browser) {
+    $contextObj | Add-Member -NotePropertyName "browser" -NotePropertyValue $Browser.ToLower()
   }
 
   if ($Urls -and $Urls.Count -gt 0) {
@@ -30,12 +38,18 @@ function Add-Context {
   $config.contexts | Add-Member -NotePropertyName $ContextName -NotePropertyValue $contextObj -Force
   Save-Config $config
 
-  Write-Host "Added context '$ContextName' (browser: $Browser)" -ForegroundColor Green
+  Write-Host "Added context '$ContextName'" -ForegroundColor Green
+  if ($Browser) {
+    Write-Host "  Browser: $Browser" -ForegroundColor DarkGray
+  }
   if ($Urls) {
     Write-Host "  URLs: $($Urls -join ', ')" -ForegroundColor DarkGray
   }
   if ($Workspace) {
     Write-Host "  Workspace: $Workspace" -ForegroundColor Magenta
+  }
+  if (-not $Browser) {
+    Write-Host "  (workspace-only, no browser)" -ForegroundColor DarkGray
   }
 }
 

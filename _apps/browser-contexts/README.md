@@ -36,6 +36,8 @@ scoop install mko/browser-contexts
 
 ## Usage
 
+### Browser Contexts (Multi-tenant SSO)
+
 ```powershell
 # Create contexts for your customers/environments
 browser-contexts add acme -b chrome
@@ -56,7 +58,31 @@ browser-contexts contoso          # Opens another isolated Chrome with contoso s
 
 # Open with additional URLs
 browser-contexts open acme https://teams.microsoft.com
+```
 
+### Workspace-Only Contexts (No Browser)
+
+Perfect for backend, infrastructure, or documentation projects that don't need a browser:
+
+```powershell
+# Backend/API projects
+browser-contexts add api-service -w "C:\Projects\api-service.code-workspace"
+
+# Infrastructure/DevOps
+browser-contexts add infra -w "C:\Projects\terraform.code-workspace"
+browser-contexts add k8s -w "wsl://Ubuntu/home/user/kubernetes.code-workspace"
+
+# Documentation projects
+browser-contexts add docs -w "C:\Docs\technical-docs.code-workspace"
+
+# Quick launch
+browser-contexts api-service      # Opens just VS Code workspace
+browser-contexts infra            # Opens workspace for infra work
+```
+
+### General Commands
+
+```powershell
 # List all contexts
 browser-contexts list
 
@@ -105,10 +131,22 @@ Config file: `~/.browser-contexts.json`
     },
     "personal": {
       "browser": "firefox"
+    },
+    "api-service": {
+      "workspace": "C:\\Projects\\api-service.code-workspace"
+    },
+    "infra": {
+      "workspace": "wsl://Ubuntu/home/user/terraform.code-workspace"
     }
   }
 }
 ```
+
+**Context Types:**
+
+- **Browser + Workspace**: Full web development contexts (SSO isolation + code)
+- **Browser only**: Web-only contexts (testing, browsing)
+- **Workspace only**: Backend/infra projects without browser needs
 
 ## Workspace Formats
 

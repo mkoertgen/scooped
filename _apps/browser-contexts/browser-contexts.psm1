@@ -95,9 +95,10 @@ Commands:
   help                         Show this help
 
 Options for 'add':
-  -b, -Browser    Browser to use: chrome, edge, brave, firefox (default: chrome)
+  -b, -Browser    Browser to use: chrome, edge, brave, firefox (optional for workspace-only)
   -u, -Urls       URLs to open automatically
   -w, -Workspace  Path to VS Code workspace (local or WSL remote)
+  Note: Must have either -Browser or -Workspace (or both)
 
 Workspace formats (must be .code-workspace files):
   C:\path\to\project.code-workspace              Local Windows workspace file
@@ -105,9 +106,17 @@ Workspace formats (must be .code-workspace files):
   \\wsl$\Ubuntu\home\user\project.code-workspace WSL UNC workspace path
 
 Examples:
+  # Browser contexts
   browser-contexts add acme -b chrome
   browser-contexts add contoso -b chrome -u "https://portal.azure.com"
+  
+  # Browser + workspace
   browser-contexts add project -b chrome -w "C:\Projects\project.code-workspace"
+  
+  # Workspace-only (no browser) - for backend/infra projects
+  browser-contexts add infra -w "C:\Projects\infrastructure.code-workspace"
+  browser-contexts add docs -w "wsl://Ubuntu/home/user/docs.code-workspace"
+  
   browser-contexts workspace acme "wsl://Ubuntu/home/user/acme.code-workspace"
   browser-contexts urls acme "https://dev.azure.com/acme" "https://teams.microsoft.com"
   browser-contexts bm acme add azure https://portal.azure.com
