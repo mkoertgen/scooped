@@ -83,7 +83,9 @@ function Get-ContextDataDir {
   param ([string]$ContextName)
   $config = Get-Config
   $dataDir = if ($config.dataDir) { $config.dataDir } else { $script:DefaultDataDir }
-  return Join-Path $dataDir $ContextName
+  # Expand ~ and environment variables
+  $expandedDataDir = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($dataDir)
+  return Join-Path $expandedDataDir $ContextName
 }
 
 function Show-Contexts {
@@ -200,7 +202,8 @@ function Show-Config {
     if ($path) {
       Write-Host "  $browser" -ForegroundColor Green -NoNewline
       Write-Host " -> $path" -ForegroundColor DarkGray
-    } else {
+    }
+    else {
       Write-Host "  $browser" -ForegroundColor DarkGray -NoNewline
       Write-Host " (not found)" -ForegroundColor DarkGray
     }
@@ -210,7 +213,8 @@ function Show-Config {
   if ($vscodePath) {
     Write-Host "  vscode" -ForegroundColor Green -NoNewline
     Write-Host " -> $vscodePath" -ForegroundColor DarkGray
-  } else {
+  }
+  else {
     Write-Host "  vscode" -ForegroundColor DarkGray -NoNewline
     Write-Host " (not found)" -ForegroundColor DarkGray
   }
