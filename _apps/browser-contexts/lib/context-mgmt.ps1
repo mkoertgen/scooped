@@ -318,7 +318,7 @@ function New-WorkspaceFile {
   }
 
   # Write workspace file
-  $workspace | ConvertTo-Json -Depth 10 | Set-Content -Path $OutputPath -Encoding UTF8
+  Save-Json -Object $workspace -Path $OutputPath
   Write-Host "Created workspace file: $OutputPath" -ForegroundColor Green
   Write-Host "  Folders: $($workspaceFolders.Count)" -ForegroundColor DarkGray
   foreach ($f in $workspaceFolders) {

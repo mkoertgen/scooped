@@ -31,6 +31,8 @@ Isolated browser sessions with separate SSO/cookie/storage state. Each context g
 | `close <context>`                        | Close browser and VS Code for context       |
 | `export`                                 | Export config as JSON (for backup/dotfiles) |
 | `import <file>`                          | Import config from JSON file                |
+| `push <file>`                            | Export config + git-remotes (for sync)      |
+| `pull <file> [--auto]`                   | Import config + restore git-remotes         |
 | `config`                                 | Show configuration and available browsers   |
 
 ## Bookmarks
@@ -122,6 +124,62 @@ bcdev workspace myctx "C:\work\project.code-workspace"
 bc export > ~/.dotfiles/.browser-contexts.json
 bc import ~/.dotfiles/.browser-contexts.json
 ```
+
+## Sync Across Machines
+
+Complete environment synchronization via git-based workflow.
+
+### Setup (One Time)
+
+```powershell
+# Machine 1: Push to meta-repo (e.g., dotfiles)
+bc push ~/dotfiles/.browser-contexts.json
+cd ~/dotfiles
+git add .browser-contexts.json *.code-workspace
+git commit -m "Update browser-contexts"
+git push
+```
+
+### Daily Workflow
+
+```powershell
+# Machine 2: Pull everything
+git -C ~/dotfiles pull                          # Update meta-repo
+bc pull ~/dotfiles/.browser-contexts.json --auto # Import + clone/pull repos
+
+# Machine 1: Push changes
+bc push ~/dotfiles/.browser-contexts.json
+git -C ~/dotfiles add -A; git -C ~/dotfiles commit -m "Update"; git -C ~/dotfiles push
+```
+
+### What Gets Synced
+
+**✓ Config**: All contexts (browsers, URLs, bookmarks, workspaces)
+**✓ Workspace files**: `.code-workspace` files copied to meta-repo
+**✓ Git remotes**: Repository URLs for auto-cloning
+**✓ Auto-clone**: Missing repos cloned automatically with `--auto`
+**✓ Auto-pull**: Existing repos updated via `git pull --ff-only`
+
+### Commands
+
+```powershell
+bc push <file>              # Export config + workspace-files + git-remotes
+bc pull <file>              # Interactive: Import config, prompt to clone repos
+bc pull <file> --auto       # Automatic: Import + clone missing + pull all repos
+```
+
+### Example: New Machine Setup
+
+```powershell
+git clone git@github.com:user/dotfiles.git ~/dotfiles
+bc pull ~/dotfiles/.browser-contexts.json --auto
+# ✓ Contexts configured
+# ✓ Workspace files copied
+# ✓ All repos cloned and updated
+# Ready to work!
+```
+
+**See [SYNC.md](SYNC.md) for detailed documentation.**
 
 ## Release Process
 

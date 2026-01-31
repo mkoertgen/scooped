@@ -1,5 +1,62 @@
 # Config management functions
 
+function Load-Json {
+  <#
+  .SYNOPSIS
+  Load JSON or JSONC (JSON with Comments) file.
+
+  .DESCRIPTION
+  Handles JSON with:
+  - Comments (// single-line)
+  - Trailing commas
+  - UTF-8 encoding (with or without BOM)
+  Common in VS Code workspace files and config files.
+
+  Note: Comments are stripped - they won't be preserved on Save-Json.
+  #>
+  param(
+    [Parameter(Mandatory)]
+    [string]$Path
+  )
+
+  if (-not (Test-Path $Path)) {
+    throw "File not found: $Path"
+  }
+
+  $json = Get-Content $Path -Raw -Encoding UTF8
+  # Strip single-line comments (// ...)
+  $json = $json -replace '(?m)^\s*//.*$', ''
+  $json = $json -replace '//[^"]*$', ''
+  # Remove trailing commas before ] or }
+  $json = $json -replace ',\s*([\]\}])', '$1'
+
+  return $json | ConvertFrom-Json
+}
+
+function Save-Json {
+  <#
+  .SYNOPSIS
+  Save object as JSON with UTF-8 encoding (no BOM) and proper formatting.
+
+  .DESCRIPTION
+  PowerShell's default JSON handling is problematic:
+  - Set-Content -Encoding UTF8 adds BOM
+  - ConvertTo-Json uses inconsistent indentation
+  This helper provides consistent, portable JSON output.
+  #>
+  param(
+    [Parameter(Mandatory)]
+    [object]$Object,
+    [Parameter(Mandatory)]
+    [string]$Path,
+    [int]$Depth = 10
+  )
+
+  $json = $Object | ConvertTo-Json -Depth $Depth
+  $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+  [System.IO.File]::WriteAllText($Path, $json, $utf8NoBom)
+}
+
 function Get-Config {
   if (Test-Path $script:ConfigPath) {
     return Get-Content $script:ConfigPath | ConvertFrom-Json
@@ -18,7 +75,7 @@ function Test-ContextExists {
 
 function Save-Config {
   param ([Parameter(Mandatory)][object]$Config)
-  $Config | ConvertTo-Json -Depth 10 | Set-Content $script:ConfigPath
+  Save-Json -Object $Config -Path $script:ConfigPath
   Write-Host "Config saved to $script:ConfigPath" -ForegroundColor DarkGray
 }
 

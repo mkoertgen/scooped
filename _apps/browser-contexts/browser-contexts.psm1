@@ -62,6 +62,7 @@ public class WindowControl {
 . "$PSScriptRoot\lib\context-mgmt.ps1"
 . "$PSScriptRoot\lib\context-open.ps1"
 . "$PSScriptRoot\lib\context-close.ps1"
+. "$PSScriptRoot\lib\sync.ps1"
 
 function Show-Help {
   Write-Host @"
@@ -92,6 +93,8 @@ Commands:
   close <context>              Close browser and VS Code for a context
   export                       Export config as JSON (pipe to file)
   import <file>                Import config from JSON file
+  push <file>                  Export config with git-remotes (for sync)
+  pull <file> [--auto] [--force] Import config and restore git-remotes (--auto clones/pulls, --force overwrites workspace files)
   config                       Show configuration and available browsers
   help                         Show this help
 
@@ -274,6 +277,22 @@ function Invoke-BrowserContexts {
       }
       $extraUrls = if ($Arguments.Count -gt 1) { $Arguments[1..($Arguments.Count - 1)] } else { @() }
       Open-Context -ContextName $Arguments[0] -ExtraUrls $extraUrls
+    }
+    "push" {
+      if (-not $Arguments -or $Arguments.Count -eq 0) {
+        Write-Error "Usage: browser-contexts push <file>"
+        return
+      }
+      Push-ContextConfig -Path $Arguments[0]
+    }
+    "pull" {
+      if (-not $Arguments -or $Arguments.Count -eq 0) {
+        Write-Error "Usage: browser-contexts pull <file> [--auto] [--force]"
+        return
+      }
+      $autoClone = $Arguments -contains "--auto" -or $Arguments -contains "-a"
+      $force = $Arguments -contains "--force" -or $Arguments -contains "-f"
+      Pull-ContextConfig -Path $Arguments[0] -AutoClone:$autoClone -Force:$force
     }
     default {
       # Treat unknown command as context name for quick access
