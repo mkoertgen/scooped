@@ -17,7 +17,8 @@ function Get-WorkspaceFolders {
   $expandedPath = $WorkspacePath
   if ($expandedPath.StartsWith('~/') -or $expandedPath.StartsWith('~\')) {
     $expandedPath = Join-Path $env:USERPROFILE $expandedPath.Substring(2)
-  } elseif ($expandedPath -eq '~') {
+  }
+  elseif ($expandedPath -eq '~') {
     $expandedPath = $env:USERPROFILE
   }
 
@@ -137,6 +138,17 @@ function Export-ConfigWithRemotes {
       profile = $ctx.profile
     }
 
+    # Preserve browser, URLs, and bookmarks
+    if ($ctx.browser) {
+      $exportCtx | Add-Member -NotePropertyName browser -NotePropertyValue $ctx.browser
+    }
+    if ($ctx.urls) {
+      $exportCtx | Add-Member -NotePropertyName urls -NotePropertyValue $ctx.urls
+    }
+    if ($ctx.bookmarks) {
+      $exportCtx | Add-Member -NotePropertyName bookmarks -NotePropertyValue $ctx.bookmarks
+    }
+
     if ($ctx.workspace) {
       # Normalize workspace path for portability (~ and forward slashes)
       $workspacePath = $ctx.workspace
@@ -153,7 +165,8 @@ function Export-ConfigWithRemotes {
         $exportCtx | Add-Member -NotePropertyName gitRemotes -NotePropertyValue $remotes
         $totalRepos += $remotes.Count
         Write-Host "    Found: $($remotes.Count) repos" -ForegroundColor Green
-      } else {
+      }
+      else {
         Write-Host "    No git repos" -ForegroundColor DarkGray
       }
     }
@@ -240,7 +253,8 @@ function Restore-GitRemotes {
 
       if ($AutoClone) {
         $answer = "y"
-      } else {
+      }
+      else {
         $answer = Read-Host "      Clone from $remoteUrl ? (y/n)"
       }
 
@@ -255,7 +269,8 @@ function Restore-GitRemotes {
 
         if ($LASTEXITCODE -eq 0 -and (Test-Path (Join-Path $targetPath ".git"))) {
           Write-Host "      Cloned successfully" -ForegroundColor Green
-        } else {
+        }
+        else {
           Write-Warning "      Clone failed: $cloneOutput"
         }
       }
@@ -278,11 +293,13 @@ function Restore-GitRemotes {
         if ($currentRemote) {
           git remote set-url origin $remoteUrl 2>&1 | Out-Null
           Write-Host "    $repoName - Updated remote" -ForegroundColor Yellow
-        } else {
+        }
+        else {
           git remote add origin $remoteUrl 2>&1 | Out-Null
           Write-Host "    $repoName - Added remote" -ForegroundColor Green
         }
-      } else {
+      }
+      else {
         Write-Host "    $repoName - Remote OK" -ForegroundColor DarkGray
       }
 
@@ -366,7 +383,8 @@ function Push-ContextConfig {
       Copy-Item $localWorkspace $targetPath -Force
       Write-Host "  Copied: $workspaceName -> .browser-contexts/" -ForegroundColor Green
       $copiedCount++
-    } else {
+    }
+    else {
       Write-Warning "  Workspace not found: $($ctx.workspace)"
     }
   }
@@ -389,7 +407,8 @@ function Push-ContextConfig {
       }
     }
     Write-Host "  Git repos tracked: $repoCount" -ForegroundColor DarkGray
-  } catch {
+  }
+  catch {
     Write-Verbose "Could not read repo count: $_"
   }
 
@@ -465,7 +484,8 @@ function Sync-WorkspaceFiles {
       $action = if ((Test-Path $localWorkspace) -and $Force) { "Overwritten" } else { "Copied" }
       Write-Host "  ${action}: $workspaceName" -ForegroundColor Green
       $copiedCount++
-    } else {
+    }
+    else {
       Write-Host "  Exists: $workspaceName (use --force to overwrite)" -ForegroundColor DarkGray
     }
   }
@@ -526,7 +546,8 @@ function Pull-ContextConfig {
       git pull --ff-only 2>$null
       if ($LASTEXITCODE -eq 0) {
         Write-Host "Meta-repo updated" -ForegroundColor Green
-      } else {
+      }
+      else {
         Write-Warning "Meta-repo pull failed - may have local changes"
       }
     }
