@@ -105,25 +105,25 @@ function Open-VSCodeWorkspace {
     return
   }
 
-  # Expand ~ and environment variables
-  $expandedPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($WorkspacePath)
-
-  # Validate: must be a .code-workspace file
-  if (-not ($expandedPath -match '\.code-workspace$')) {
-    Write-Warning "Workspace must be a .code-workspace file: $expandedPath"
-    Write-Warning "Use 'code --folder-uri' for folders, or create a workspace file."
-    return
-  }
-
   # Check for WSL remote format: wsl://<distro>/<path>
-  if ($expandedPath -match '^wsl://([^/]+)(/.*)$') {
+  if ($WorkspacePath -match '^wsl://([^/]+)(/.*)$') {
     $distro = $Matches[1]
     $wslPath = $Matches[2]
+
+    if (-not ($wslPath -match '\.code-workspace$')) {
+      Write-Warning "Workspace must be a .code-workspace file: $WorkspacePath"
+      Write-Warning "Use 'code --folder-uri' for folders, or create a workspace file."
+      return
+    }
+
     Write-Host "Opening VS Code WSL workspace: $distro$wslPath" -ForegroundColor Magenta
     $fileUri = "vscode-remote://wsl+$distro$wslPath"
     Start-Process $vscodePath -ArgumentList "--file-uri", "`"$fileUri`"" -WindowStyle Hidden
     return
   }
+
+  # Expand ~ and environment variables
+  $expandedPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($WorkspacePath)
 
   # Check for \\wsl$\ or \\wsl.localhost\ UNC paths
   if ($expandedPath -match '^\\\\wsl(\$|\.localhost)\\([^\\]+)\\(.*)$') {
