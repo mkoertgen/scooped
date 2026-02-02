@@ -15,20 +15,17 @@ function Open-Context {
   }
 
   $ctx = $config.contexts.$ContextName
-  $browser = $ctx.browser
   $hasUrls = ($ctx.urls -and $ctx.urls.Count -gt 0) -or ($ExtraUrls -and $ExtraUrls.Count -gt 0)
 
-  # Workspace-only context (no browser)
-  if (-not $browser -and $ctx.workspace) {
+  # Workspace-only context: has workspace but NO browser AND NO URLs
+  if (-not $ctx.browser -and -not $hasUrls -and $ctx.workspace) {
     Write-Host "Opening workspace-only context: $ContextName" -ForegroundColor Green
     Open-VSCodeWorkspace -WorkspacePath $ctx.workspace
     return
   }
 
-  # Browser context
-  if (-not $browser) {
-    $browser = "chrome"  # Default fallback
-  }
+  # Browser context: Default to chrome if not specified (matches bc list behavior)
+  $browser = if ($ctx.browser) { $ctx.browser } else { "chrome" }
 
   $browserPath = Get-BrowserPath $browser
   if (-not $browserPath) {
@@ -55,8 +52,7 @@ function Open-Context {
       if ($ctx.bookmarks -and ($ctx.bookmarks.PSObject.Properties.Name -contains $item)) {
         $urls += $ctx.bookmarks.$item
         Write-Host "  bookmark '$item': $($ctx.bookmarks.$item)" -ForegroundColor DarkGray
-      }
-      else {
+      } else {
         # Treat as URL
         $urls += $item
       }
@@ -68,8 +64,7 @@ function Open-Context {
 
   if ($isRunning) {
     Write-Host "Context '$ContextName' is already running" -ForegroundColor Yellow
-  }
-  else {
+  } else {
     # Build arguments based on browser type
     if ($browser -eq "firefox") {
       # Firefox uses -profile
@@ -77,8 +72,7 @@ function Open-Context {
       if ($urls.Count -gt 0) {
         $args += $urls
       }
-    }
-    else {
+    } else {
       # Chromium-based browsers use --user-data-dir
       $args = @(
         "--user-data-dir=`"$dataDir`"",
@@ -145,8 +139,7 @@ function Open-VSCodeWorkspace {
   if (Test-Path $expandedPath) {
     Write-Host "Opening VS Code workspace: $expandedPath" -ForegroundColor Magenta
     Start-Process $vscodePath -ArgumentList "`"$expandedPath`"" -WindowStyle Hidden
-  }
-  else {
+  } else {
     Write-Warning "Workspace not found: $expandedPath"
   }
 }
