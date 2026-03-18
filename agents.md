@@ -31,12 +31,12 @@ npm run changelog
 
 ## Structure
 
-| Path | Purpose |
-|---|---|
-| `bucket/` | Scoop manifests (JSON) — one per app |
-| `_apps/` | App source definitions (`phone-home`, `git-ws`, `git-merge-bots`, `browser-contexts`) |
-| `scripts/` | Build/release helper scripts |
-| `_docs/adrs/` | Architecture Decision Records |
+| Path          | Purpose                                                                               |
+| ------------- | ------------------------------------------------------------------------------------- |
+| `bucket/`     | Scoop manifests (JSON) — one per app                                                  |
+| `_apps/`      | App source definitions (`phone-home`, `git-ws`, `git-merge-bots`, `browser-contexts`) |
+| `scripts/`    | Build/release helper scripts                                                          |
+| `_docs/adrs/` | Architecture Decision Records                                                         |
 
 ## Working Rules
 
