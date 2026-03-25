@@ -83,9 +83,10 @@ $ gws status
 
 When run without `-Workspace`, the tool automatically detects the correct workspace:
 
-1. **Climb & Match**: Searches parent directories for `.code-workspace` files
-2. **Folder Check**: Verifies which workspace contains the current directory
-3. **Fallback**: Uses workspace files in current directory
+1. **VS Code Window Title**: Reads the foreground window title via the Windows API and extracts the workspace name from the pattern `"... - <name> (Workspace) - Visual Studio Code"`. This works even when the terminal is not inside the workspace folder structure.
+2. **Climb & Match**: Searches parent directories for `.code-workspace` files
+3. **Folder Check**: Verifies which workspace contains the current directory
+4. **Fallback**: Uses workspace files in current directory
 
 This means you can run `gws pull` from anywhere inside a workspace folder structure.
 
