@@ -1,0 +1,17 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "description": "Automated dependency updates for scooped",
+  "enabledManagers": ["github-actions"],
+  "packageRules": [
+    {
+      "description": "Group and automerge GitHub Actions updates",
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions",
+      "automerge": true,
+      "automergeType": "pr"
+    }
+  ],
+  "labels": ["dependencies", "renovate"],
+  "prConcurrentLimit": 3
+}
