@@ -88,10 +88,31 @@ function Test-ContextRunning {
     return $false
   }
 
-  # Chromium browsers (Chrome, Edge, Brave): Simple lockfile check
+  # Chromium browsers (Chrome, Edge, Brave): Lockfile + process verification (cleans stale locks)
   $lockFiles = @("lockfile", "Singleton", "SingletonLock")
   $found = $lockFiles | ForEach-Object { Join-Path $DataDir $_ } | Where-Object { Test-Path $_ } | Select-Object -First 1
-  return [bool]$found
+  if (-not $found) { return $false }
+
+  # Verify a Chromium process is actually running with this data dir
+  $processName = switch ($Browser.ToLower()) {
+    "edge" { "msedge" }
+    "brave" { "brave" }
+    "chromium" { "chrome" }
+    default { "chrome" }
+  }
+  $escapedPath = [regex]::Escape($DataDir)
+  $process = Get-CimInstance Win32_Process -Filter "Name = '$processName.exe'" -ErrorAction SilentlyContinue |
+  Where-Object { $_.CommandLine -and $_.CommandLine -match $escapedPath -and $_.CommandLine -notlike "*--type=*" } |
+  Select-Object -First 1
+
+  if ($process) {
+    return $true
+  } else {
+    # Stale lock file - browser crashed or was killed
+    Write-Host "  Cleaning stale $Browser lock file" -ForegroundColor DarkGray
+    Remove-Item $found -Force -ErrorAction SilentlyContinue
+    return $false
+  }
 }
 
 function Get-VSCodePath {
