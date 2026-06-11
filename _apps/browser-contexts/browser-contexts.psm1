@@ -238,7 +238,11 @@ function Invoke-BrowserContexts {
         Write-Error "Usage: browser-contexts add-url <name> <url>"
         return
       }
-      Add-ContextUrl -ContextName $Arguments[0] -Urls $Arguments[1..($Arguments.Count - 1)]
+      if ($Arguments.Count -gt 2) {
+        Write-Error "add-url accepts exactly one URL. Use 'urls' to replace all URLs."
+        return
+      }
+      Add-ContextUrl -ContextName $Arguments[0] -Url $Arguments[1]
     }
     "remove-url" {
       if (-not $Arguments -or $Arguments.Count -lt 2) {

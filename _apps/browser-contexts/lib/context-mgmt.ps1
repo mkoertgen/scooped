@@ -216,7 +216,7 @@ function Set-ContextUrls {
 function Add-ContextUrl {
   param (
     [Parameter(Mandatory)][string]$ContextName,
-    [Parameter(Mandatory)][string[]]$Urls
+    [Parameter(Mandatory)][string]$Url
   )
 
   $config = Get-Config
@@ -230,21 +230,16 @@ function Add-ContextUrl {
   $existingUrls = @()
   if ($ctx.urls) { $existingUrls = @($ctx.urls) }
 
-  $added = @($Urls | Where-Object { $_ -notin $existingUrls })
-
-  if ($added.Count -eq 0) {
-    Write-Host "URLs already present in '$ContextName'." -ForegroundColor DarkGray
+  if ($Url -in $existingUrls) {
+    Write-Host "URL already present in '$ContextName'." -ForegroundColor DarkGray
     return
   }
 
-  $newUrls = $existingUrls + $added
+  $newUrls = $existingUrls + $Url
   $config.contexts.$ContextName | Add-Member -NotePropertyName "urls" -NotePropertyValue $newUrls -Force
   Save-Config $config
 
-  Write-Host "Added URL(s) to '$ContextName':" -ForegroundColor Green
-  foreach ($url in $added) {
-    Write-Host "  + $url" -ForegroundColor DarkGray
-  }
+  Write-Host "Added URL to '$ContextName': $Url" -ForegroundColor Green
 }
 
 function Remove-ContextUrl {
@@ -303,7 +298,7 @@ function New-WorkspaceFile {
 
   # Create workspace JSON
   $workspace = @{
-    folders = $workspaceFolders
+    folders  = $workspaceFolders
     settings = @{}
   }
 
