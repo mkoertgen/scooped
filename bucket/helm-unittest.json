@@ -1,15 +1,20 @@
 {
-  "version": "0.8.2",
-  "description": "Unit test for helm chart in YAML to keep your chart consistent and robust!",
-  "homepage": "https://github.com/helm-unittest/helm-unittest",
-  "license": "MIT License",
-  "url": "https://github.com/helm-unittest/helm-unittest/releases/download/v0.8.2/helm-unittest-windows-amd64-0.8.2.tgz",
-  "hash": "9d5b2b68b1fbf86aeaae36679aa716b5db295d31055bb7952b9cc344193e8378",
-  "bin": [["untt.exe", "untt"]],
-  "checkver": {
-    "github": "https://github.com/helm-unittest/helm-unittest"
-  },
-  "autoupdate": {
-    "url": "https://github.com/helm-unittest/helm-unittest/releases/download/v$version/helm-unittest-windows-amd64-$version.tgz"
-  }
+    "version": "1.2.1",
+    "description": "Unit test for helm chart in YAML to keep your chart consistent and robust!",
+    "homepage": "https://github.com/helm-unittest/helm-unittest",
+    "license": "MIT License",
+    "url": "https://github.com/helm-unittest/helm-unittest/releases/download/v1.2.1/helm-unittest-windows-amd64-1.2.1.tgz",
+    "hash": "25878995e493f68604d3b0976aa9b7ac6cdf154db7b98a61b589e834be7835c1",
+    "bin": [
+        [
+            "untt.exe",
+            "untt"
+        ]
+    ],
+    "checkver": {
+        "github": "https://github.com/helm-unittest/helm-unittest"
+    },
+    "autoupdate": {
+        "url": "https://github.com/helm-unittest/helm-unittest/releases/download/v$version/helm-unittest-windows-amd64-$version.tgz"
+    }
 }
