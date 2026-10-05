@@ -5,5 +5,11 @@
   "license": "Apache-2.0",
   "url": "https://github.com/CycloneDX/cyclonedx-cli/releases/download/v0.33.1/cyclonedx-win-x64.exe",
   "hash": "9b360974c41a5d612eb026fb5e3bb1fa28e08865f7a4f915665b8bc94bd3bc31",
-  "bin": [["cyclonedx-win-x64.exe", "cyclonedx"]]
+  "bin": [["cyclonedx-win-x64.exe", "cyclonedx"]],
+  "checkver": {
+    "github": "https://github.com/CycloneDX/cyclonedx-cli"
+  },
+  "autoupdate": {
+    "url": "https://github.com/CycloneDX/cyclonedx-cli/releases/download/v$version/cyclonedx-win-x64.exe"
+  }
 }

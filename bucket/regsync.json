@@ -5,5 +5,11 @@
   "license": "Apache License 2.0",
   "url": "https://github.com/regclient/regclient/releases/download/v0.6.0/regsync-windows-amd64.exe",
   "hash": "d4a712d872e9eb22771624d9f2a63d25623aa5d21a0c59dd3c3e762cc04bd383",
-  "bin": [["regsync-windows-amd64.exe", "regsync"]]
+  "bin": [["regsync-windows-amd64.exe", "regsync"]],
+  "checkver": {
+    "github": "https://github.com/regclient/regclient"
+  },
+  "autoupdate": {
+    "url": "https://github.com/regclient/regclient/releases/download/v$version/regsync-windows-amd64.exe"
+  }
 }

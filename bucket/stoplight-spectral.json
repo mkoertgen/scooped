@@ -5,5 +5,12 @@
   "license": "Apache License 2.0",
   "url": "https://github.com/stoplightio/spectral/releases/download/v6.13.1/spectral.exe",
   "hash": "e3dbeb28c5166c2552ee71c53761eac9b5ab4b84d0234120986dc4833b33bd29",
-  "bin": [["spectral.exe", "spectral"]]
+  "bin": [["spectral.exe", "spectral"]],
+  "checkver": {
+    "url": "https://github.com/stoplightio/spectral/releases/latest",
+    "regex": "/releases/tag/(v[\\d.]+)"
+  },
+  "autoupdate": {
+    "url": "https://github.com/stoplightio/spectral/releases/download/$version/spectral.exe"
+  }
 }

@@ -5,5 +5,11 @@
   "license": "Apache License 2.0",
   "url": "https://github.com/raffis/gitops-zombies/releases/download/v0.0.9/gitops-zombies_0.0.9_windows_amd64.tar.gz",
   "hash": "ac2072bcb412f1dc94e0c335cd4f57d099845d9ad56ea8321b2f3d275e93ea0f",
-  "bin": "gitops-zombies.exe"
+  "bin": "gitops-zombies.exe",
+  "checkver": {
+    "github": "https://github.com/raffis/gitops-zombies"
+  },
+  "autoupdate": {
+    "url": "https://github.com/raffis/gitops-zombies/releases/download/v$version/gitops-zombies_$version_windows_amd64.tar.gz"
+  }
 }

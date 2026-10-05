@@ -2,12 +2,14 @@ on:
   workflow_dispatch:
   schedule:
     # run every 4 hours
-    - cron: '20 */4 * * *'
+    - cron: "20 */4 * * *"
 name: Excavator
 jobs:
   excavate:
     name: Excavate
     runs-on: windows-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@main
       - name: Excavate
