@@ -1,15 +1,20 @@
 {
-  "version": "0.5.6",
-  "description": "The terranetes controller manages the lifecycle of an OpenTofu or Terraform resource, allowing developers to self-serve dependencies in a controlled manner.",
-  "homepage": "https://terranetes.appvia.io/",
-  "license": "GPL-2.0",
-  "url": "https://github.com/appvia/terranetes-controller/releases/download/v0.5.6/tnctl-windows-amd64.exe",
-  "hash": "14d3b467d968f956cfd88d6e81557232bd6f4d515dc3ab85dbd6ed3029d65430",
-  "bin": [["tnctl-windows-amd64.exe", "tnctl"]],
-  "checkver": {
-    "github": "https://github.com/appvia/terranetes-controller"
-  },
-  "autoupdate": {
-    "url": "https://github.com/appvia/terranetes-controller/releases/download/v$version/tnctl-windows-amd64.exe"
-  }
+    "version": "0.5.7",
+    "description": "The terranetes controller manages the lifecycle of an OpenTofu or Terraform resource, allowing developers to self-serve dependencies in a controlled manner.",
+    "homepage": "https://terranetes.appvia.io/",
+    "license": "GPL-2.0",
+    "url": "https://github.com/appvia/terranetes-controller/releases/download/v0.5.7/tnctl-windows-amd64.exe",
+    "hash": "ec2d3e1b9dfa996d4028f0e6cfa3e0cc29c55c530c1d2fc486a5bc5f4c839274",
+    "bin": [
+        [
+            "tnctl-windows-amd64.exe",
+            "tnctl"
+        ]
+    ],
+    "checkver": {
+        "github": "https://github.com/appvia/terranetes-controller"
+    },
+    "autoupdate": {
+        "url": "https://github.com/appvia/terranetes-controller/releases/download/v$version/tnctl-windows-amd64.exe"
+    }
 }
