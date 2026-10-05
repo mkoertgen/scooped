@@ -1,16 +1,16 @@
 {
-  "version": "0.5.4",
-  "description": "Kor - Kubernetes Orphaned Resources Finder",
-  "homepage": "https://github.com/yonahd/kor",
-  "license": "MIT License",
-  "url": "https://github.com/yonahd/kor/releases/download/v0.5.4/kor_Windows_x86_64.zip",
-  "hash": "ddb06dfb7bcf5c47e087df0070561b053c782319a8b63cdaa5f87d7b5e1d8983",
-  "bin": "kor.exe",
-  "checkver": {
-    "url": "https://api.github.com/repos/yonahd/kor/releases",
-    "regex": "\"tag_name\":\\s*\"v(\\d+\\.\\d+\\.\\d+)\""
-  },
-  "autoupdate": {
-    "url": "https://github.com/yonahd/kor/releases/download/v$version/kor_Windows_x86_64.zip"
-  }
+    "version": "0.6.9",
+    "description": "Kor - Kubernetes Orphaned Resources Finder",
+    "homepage": "https://github.com/yonahd/kor",
+    "license": "MIT License",
+    "url": "https://github.com/yonahd/kor/releases/download/v0.6.9/kor_Windows_x86_64.zip",
+    "hash": "cc91a3f06f536d4b188bb09d5ad7f4083485598e5b35e40a0a77955828d554d6",
+    "bin": "kor.exe",
+    "checkver": {
+        "url": "https://api.github.com/repos/yonahd/kor/releases",
+        "regex": "\"tag_name\":\\s*\"v(\\d+\\.\\d+\\.\\d+)\""
+    },
+    "autoupdate": {
+        "url": "https://github.com/yonahd/kor/releases/download/v$version/kor_Windows_x86_64.zip"
+    }
 }
