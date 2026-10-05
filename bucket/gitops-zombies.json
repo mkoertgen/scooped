@@ -1,15 +1,15 @@
 {
-  "version": "0.0.9",
-  "description": "GitOps zombies",
-  "homepage": "https://github.com/raffis/gitops-zombies",
-  "license": "Apache License 2.0",
-  "url": "https://github.com/raffis/gitops-zombies/releases/download/v0.0.9/gitops-zombies_0.0.9_windows_amd64.tar.gz",
-  "hash": "ac2072bcb412f1dc94e0c335cd4f57d099845d9ad56ea8321b2f3d275e93ea0f",
-  "bin": "gitops-zombies.exe",
-  "checkver": {
-    "github": "https://github.com/raffis/gitops-zombies"
-  },
-  "autoupdate": {
-    "url": "https://github.com/raffis/gitops-zombies/releases/download/v$version/gitops-zombies_$version_windows_amd64.tar.gz"
-  }
+    "version": "0.1.1",
+    "description": "GitOps zombies",
+    "homepage": "https://github.com/raffis/gitops-zombies",
+    "license": "Apache License 2.0",
+    "url": "https://github.com/raffis/gitops-zombies/releases/download/v0.1.1/gitops-zombies_0.1.1_windows_amd64.tar.gz",
+    "hash": "158452471a4527cfa2551060218fcbbd09b77f3c2028aa57c8915326e3a37800",
+    "bin": "gitops-zombies.exe",
+    "checkver": {
+        "github": "https://github.com/raffis/gitops-zombies"
+    },
+    "autoupdate": {
+        "url": "https://github.com/raffis/gitops-zombies/releases/download/v$version/gitops-zombies_$version_windows_amd64.tar.gz"
+    }
 }
