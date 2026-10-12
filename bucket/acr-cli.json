@@ -1,10 +1,10 @@
 {
-    "version": "0.19",
+    "version": "0.20",
     "description": "Azure Container Registry CLI",
     "homepage": "https://github.com/Azure/acr-cli",
     "license": "MIT License",
-    "url": "https://github.com/Azure/acr-cli/releases/download/v0.19/acr-cli_0.19_Windows_x86_64.zip",
-    "hash": "2a65bf3ee256935b086828bc5a52337bf949a72a1f0e71cbf62be8dbdd7dc705",
+    "url": "https://github.com/Azure/acr-cli/releases/download/v0.20/acr-cli_0.20_Windows_x86_64.zip",
+    "hash": "25f6f0495abd841c0e635813d8030b84204b7d5c21b7e22e734e133a1351da23",
     "bin": [
         [
             "acr-cli.exe",
