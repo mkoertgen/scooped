@@ -1,10 +1,10 @@
 {
-    "version": "0.11.6",
+    "version": "0.11.7",
     "description": "Client interface for the registry API. This includes regctl for a command line interface to manage registries.",
     "homepage": "https://github.com/regclient/regclient",
     "license": "Apache License 2.0",
-    "url": "https://github.com/regclient/regclient/releases/download/v0.11.6/regctl-windows-amd64.exe",
-    "hash": "02778e22c482d437e14fc06ee1e8504aa8f0f0d2ac266a89ab80c8a5503c8024",
+    "url": "https://github.com/regclient/regclient/releases/download/v0.11.7/regctl-windows-amd64.exe",
+    "hash": "70f195ff4923082340738c796880864f66a296e6c5d3296bf743310653ad761f",
     "bin": [
         [
             "regctl-windows-amd64.exe",
