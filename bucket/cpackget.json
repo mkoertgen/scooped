@@ -1,0 +1,40 @@
+{
+  "version": "2.2.2",
+  "description": "Download and manage CMSIS software packs.",
+  "homepage": "https://github.com/Open-CMSIS-Pack/cpackget",
+  "license": "Apache-2.0",
+  "architecture": {
+    "64bit": {
+      "url": "https://github.com/Open-CMSIS-Pack/cpackget/releases/download/v2.2.2/cpackget_2.2.2_windows_amd64.zip",
+      "hash": "9ca0edb6ea260e755f975cfec3b74ac5011b4f335a73d05b37e8379a77bb0b31",
+      "extract_dir": "cpackget_2.2.2_windows_amd64"
+    },
+    "arm64": {
+      "url": "https://github.com/Open-CMSIS-Pack/cpackget/releases/download/v2.2.2/cpackget_2.2.2_windows_arm64.zip",
+      "hash": "19f91a215d4f1bee8c72cd76e04da11610e45c0b511f4fa6be73791b1afe12a5",
+      "extract_dir": "cpackget_2.2.2_windows_arm64"
+    }
+  },
+  "bin": "cpackget.exe",
+  "checkver": {
+    "github": "https://github.com/Open-CMSIS-Pack/cpackget"
+  },
+  "autoupdate": {
+    "architecture": {
+      "64bit": {
+        "url": "https://github.com/Open-CMSIS-Pack/cpackget/releases/download/v$version/cpackget_$version_windows_amd64.zip",
+        "hash": {
+          "url": "https://github.com/Open-CMSIS-Pack/cpackget/releases/download/v$version/cpackget_$version_checksums.txt"
+        },
+        "extract_dir": "cpackget_$version_windows_amd64"
+      },
+      "arm64": {
+        "url": "https://github.com/Open-CMSIS-Pack/cpackget/releases/download/v$version/cpackget_$version_windows_arm64.zip",
+        "hash": {
+          "url": "https://github.com/Open-CMSIS-Pack/cpackget/releases/download/v$version/cpackget_$version_checksums.txt"
+        },
+        "extract_dir": "cpackget_$version_windows_arm64"
+      }
+    }
+  }
+}
