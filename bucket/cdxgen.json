@@ -1,12 +1,12 @@
 {
-    "version": "13.6.0",
+    "version": "13.7.0",
     "description": "CycloneDX generator for software bills of materials from source code, binaries, and containers.",
     "homepage": "https://github.com/cdxgen/cdxgen",
     "license": "Apache-2.0",
     "architecture": {
         "64bit": {
-            "url": "https://github.com/cdxgen/cdxgen/releases/download/v13.6.0/cdxgen-windows-amd64.exe",
-            "hash": "71c49545872f881b7c27655329d6e381e8a5837caddcdb017e3a09161d21dcfd"
+            "url": "https://github.com/cdxgen/cdxgen/releases/download/v13.7.0/cdxgen-windows-amd64.exe",
+            "hash": "40c448644e4454efc020ef38c31cb4af578315be7549c99240f11d5759881dcc"
         }
     },
     "bin": [
