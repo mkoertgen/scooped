@@ -1,10 +1,10 @@
 {
-    "version": "0.6.9",
+    "version": "0.7.0",
     "description": "Kor - Kubernetes Orphaned Resources Finder",
     "homepage": "https://github.com/yonahd/kor",
     "license": "MIT License",
-    "url": "https://github.com/yonahd/kor/releases/download/v0.6.9/kor_Windows_x86_64.zip",
-    "hash": "cc91a3f06f536d4b188bb09d5ad7f4083485598e5b35e40a0a77955828d554d6",
+    "url": "https://github.com/yonahd/kor/releases/download/v0.7.0/kor_Windows_x86_64.zip",
+    "hash": "52764603ac3ea5a9d201cbff528efd76ae62f647097cac8d6a276f97bf9a17ea",
     "bin": "kor.exe",
     "checkver": {
         "url": "https://api.github.com/repos/yonahd/kor/releases",
