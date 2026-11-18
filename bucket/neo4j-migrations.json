@@ -1,13 +1,13 @@
 {
-    "version": "4.2.2",
+    "version": "4.3.1",
     "description": "Neo4j-Migrations",
     "homepage": "https://github.com/michael-simons/neo4j-migrations",
     "license": "Apache-2.0",
-    "url": "https://github.com/michael-simons/neo4j-migrations/releases/download/4.2.2/neo4j-migrations-4.2.2-windows-x86_64.zip",
-    "hash": "afa7373ec32deb9a423e6477f209c5543cd4d86eae8f6ad6e9fd6572e42d621c",
+    "url": "https://github.com/michael-simons/neo4j-migrations/releases/download/4.3.1/neo4j-migrations-4.3.1-windows-x86_64.zip",
+    "hash": "79ee2f3e3d6222b9603414a03cca2c7bc993590b345019a5afa208df1b73a018",
     "bin": [
         [
-            "neo4j-migrations-4.2.2-windows-x86_64/bin/neo4j-migrations.exe",
+            "neo4j-migrations-4.3.1-windows-x86_64/bin/neo4j-migrations.exe",
             "neo4j-migrations"
         ]
     ],
